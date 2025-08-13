@@ -1,0 +1,12 @@
+name = "PlasmaWaves"
+uuid = "12efb907-3f94-4823-94fe-a707db5a5005"
+version = "0.1.0"
+
+[deps]
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+
+[extras]
+Test = "f7bf716d-1ee9-5fcb-9ce3-00f0a0e1e328"
+
+[targets]
+test = ["Test"]
