@@ -1,5 +1,6 @@
 using Test
 using PlasmaWaves
+using LinearAlgebra
 
 @testset "Aqua" begin
     using Aqua
