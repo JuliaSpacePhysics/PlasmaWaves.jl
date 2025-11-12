@@ -1,6 +1,17 @@
+svd_S(S) = begin
+    A = @SMatrix [
+        real(S[1, 1])   real(S[1, 2])   real(S[1, 3]);
+        real(S[1, 2])   real(S[2, 2])   real(S[2, 3]);
+        real(S[1, 3])   real(S[2, 3])   real(S[3, 3]);
+        0               -imag(S[1, 2]) -imag(S[1, 3]);
+        imag(S[1, 2])   0               -imag(S[2, 3]);
+        imag(S[1, 3])   imag(S[2, 3])   0;
+    ]
+    return svd(A; full = false)
+end
+
 function svd_polarization(S::AbstractMatrix)
-    A = SMatrix{6, 3}([real.(S); -imag.(S)])
-    _, Svals, V = svd(A; full = false)
+    _, Svals, V = svd_S(S)
     # singular values in Svals (vector length = 3)
     # take v = column 3 of V (associated with smallest singular value?) or as in your algorithm
     v = V[:, 3]

@@ -31,4 +31,4 @@ res.waveangle # wave normal angle estimates
 
 For SVD-derived planarity metrics, call `wavpol_svd` or `twavpol_svd`.
 
-⚠️ **Development Status**: This package is in active development. While functional, the functionality is not well tested and the API may undergo changes in future releases. Please test thoroughly before using in scientific work.
+⚠️ **Development Status**: This package is in active development. While functional, the functionality is not fully tested (it has been cross-validated with a Python implementation in `PySPEDAS`) and the API may undergo changes in future releases. Please test thoroughly before using in scientific work.
