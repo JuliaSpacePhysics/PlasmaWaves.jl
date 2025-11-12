@@ -7,6 +7,8 @@ Wave analysis for (space) plasmas, built in Julia.
 
 **Installation**: at the Julia REPL, run `using Pkg; Pkg.add("PlasmaWaves")`
 
+**Documentation**: [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaSpacePhysics.github.io/PlasmaWaves.jl/dev/)
+
 ## Features and Roadmap
 
 - [x] Wave polarization analysis with degree of polarization, wave normal angle, helicity, ellipticity, and planarity metrics

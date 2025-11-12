@@ -6,29 +6,6 @@
 
 include("./svd.jl")
 
-struct StokesVector{T}
-    S0::T
-    S1::T
-    S2::T
-    S3::T
-end
-
-"""
-    polarization(S0, S1, S2, S3)
-    polarization(S::StokesVector)
-
-Compute the degree of polarization (p) from Stoke parameters or a Stokes vector.
-
-# Reference
-- [Wikipedia](https://en.wikipedia.org/wiki/Polarization_(waves))
-- [Stokes parameters](https://en.wikipedia.org/wiki/Stokes_parameters)
-"""
-function polarization(S0, S1, S2, S3)
-    return sqrt(S1^2 + S2^2 + S3^2) / S0
-end
-
-polarization(S::StokesVector) = polarization(S.S0, S.S1, S.S2, S.S3)
-
 """
     polarization(S)
 
@@ -163,6 +140,3 @@ function wavpol(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nfft, 2
     power_s = power * 2 / (binwidth * W)
     return (; indices, freqs, power = power_s, degpol, waveangle, ellipticity, helicity)
 end
-
-function twavpol end
-function twavpol_svd end
