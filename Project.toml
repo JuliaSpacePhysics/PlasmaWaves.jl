@@ -19,8 +19,8 @@ DimensionalData = "0703355e-b756-11e9-17c0-8b28908087d0"
 PlasmaWavesDimensionalDataExt = "DimensionalData"
 
 [compat]
-Bumper = "0.7.1"
-FFTW = "1.10.0"
-LinearAlgebra = "1.12.0"
-StaticArrays = "1.9.15"
-Tullio = "0.3.8"
+Bumper = "0.7"
+FFTW = "1"
+LinearAlgebra = "1"
+StaticArrays = "1.9"
+Tullio = "0.3"
