@@ -1,10 +1,16 @@
 using Test
 using PlasmaWaves
 using LinearAlgebra
+using JET: @test_call
 
 @testset "Aqua" begin
     using Aqua
     Aqua.test_all(PlasmaWaves)
+end
+
+@testset "JET" begin
+    @test_nowarn PlasmaWaves.workload()
+    @test_call PlasmaWaves.workload()
 end
 
 @testset "svd of spectral matrix" begin

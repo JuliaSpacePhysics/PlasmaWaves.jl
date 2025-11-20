@@ -13,7 +13,7 @@ function spectral_matrix(Xf::AbstractMatrix{<:Complex})
     return @tullio S[i, j, f] := Xf[f, i] * conj(Xf[f, j])
 end
 
-spectral_matrix!(S, Xf) = (@tullio S[i, j, f] = Xf[f, i] * conj(Xf[f, j]))
+spectral_matrix!(S, Xf) = @tullio S[i, j, f] = Xf[f, i] * conj(Xf[f, j]) threads = false
 
 """
     spectral_matrix(X, dim = 1)
