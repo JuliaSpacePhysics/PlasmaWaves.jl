@@ -1,6 +1,6 @@
 name = "PlasmaWaves"
 uuid = "12efb907-3f94-4823-94fe-a707db5a5005"
-version = "0.1.0"
+version = "0.1.1"
 
 [workspace]
 projects = ["docs", "test"]
