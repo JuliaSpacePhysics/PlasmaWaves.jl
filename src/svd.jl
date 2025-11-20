@@ -62,7 +62,7 @@ function wavpol_svd(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nff
             end_idx = start_idx + nfft - 1
             Xw .= view(X, start_idx:end_idx, :) .* smooth_t
             mul!(Xf, plan, Xw)
-            Xf ./= sqrt(nfft) # normalize
+            Xf ./= nfft # normalize
             spectral_matrix!(S, Xf)
             smooth_spectral_matrix!(Sm, S, smooth_f)
             for f in 1:Nfreq

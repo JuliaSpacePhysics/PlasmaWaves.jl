@@ -120,7 +120,7 @@ function wavpol(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nfft, 2
             end_idx = start_idx + nfft - 1
             Xw .= view(X, start_idx:end_idx, :) .* smooth_t
             mul!(Xf, plan, Xw)
-            Xf ./= sqrt(nfft) # Normalize
+            Xf ./= nfft # Normalize
             spectral_matrix!(S, Xf)
             smooth_spectral_matrix!(Sm, S, smooth_f)
             # Compute the following polarization parameters from the spectral matrix ``S``:
