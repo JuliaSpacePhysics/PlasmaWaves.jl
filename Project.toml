@@ -1,6 +1,7 @@
 name = "PlasmaWaves"
 uuid = "12efb907-3f94-4823-94fe-a707db5a5005"
 version = "0.1.1"
+authors = ["Zijin Zhang <zijin@ucla.edu>"]
 
 [workspace]
 projects = ["docs", "test"]

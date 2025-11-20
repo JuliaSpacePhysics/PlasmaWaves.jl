@@ -1,5 +1,7 @@
 # PlasmaWaves
 
+[![DOI](https://zenodo.org/badge/1094801941.svg)](https://doi.org/10.5281/zenodo.17657870)
+
 [![Build Status](https://github.com/JuliaSpacePhysics/PlasmaWaves.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaSpacePhysics/PlasmaWaves.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/JuliaSpacePhysics/PlasmaWaves.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaSpacePhysics/PlasmaWaves.jl)
 

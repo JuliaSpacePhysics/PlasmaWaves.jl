@@ -1,5 +1,7 @@
 # PlasmaWaves.jl
 
+[![DOI](https://zenodo.org/badge/1094801941.svg)](https://doi.org/10.5281/zenodo.17657870)
+
 ```@docs
 PlasmaWaves
 ```
