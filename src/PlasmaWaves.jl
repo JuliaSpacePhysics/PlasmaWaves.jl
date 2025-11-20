@@ -1,3 +1,10 @@
+"""
+Plasma wave analysis.
+
+# Functions
+
+- Wave polarization analysis: [`twavpol`](@ref), [`twavpol_svd`](@ref)
+"""
 module PlasmaWaves
 using FFTW
 using LinearAlgebra
