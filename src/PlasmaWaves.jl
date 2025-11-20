@@ -1,9 +1,11 @@
 """
+    PlasmaWaves
+
 Plasma wave analysis.
 
 # Functions
 
-- Wave polarization analysis: [`twavpol`](@ref), [`twavpol_svd`](@ref)
+- Wave polarization analysis: [`twavpol`](@ref), [`twavpol_svd`](@ref), including calculating the degree of polarization, wave normal angle, helicity, ellipticity, and planarity metrics.
 """
 module PlasmaWaves
 using FFTW
@@ -12,6 +14,7 @@ using StaticArrays
 using SpaceDataModel: times, cadence
 
 using Tullio, Bumper
+using PrecompileTools
 export spectral_matrix, wavpol, twavpol, twavpol_svd, wpol_helicity, polarization
 
 include("spectral_matrix.jl")
@@ -42,8 +45,9 @@ function _twavpol(f, x; fs = nothing, nfft = 256, noverlap = div(nfft, 2), kwarg
     t = times(x)
     fs = @something fs 1 / cadence(Float64, t)
     res = f(x, fs; nfft, noverlap, kwargs...)
-    return (times = t[res.indices], res...)
+    return (; times = t[res.indices], res...)
 end
 
+include("workload.jl")
 
 end # module
