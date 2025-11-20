@@ -1,10 +1,16 @@
 # PlasmaWaves.jl
 
-See [Wave polarization cross-validation with PySPEDAS](https://juliaspacephysics.github.io/SPEDAS.jl/dev/validation/pyspedas/) for an example of how to use this package.
-
 ```@docs
 PlasmaWaves
 ```
+
+See [Wave polarization cross-validation with PySPEDAS](https://juliaspacephysics.github.io/SPEDAS.jl/dev/validation/pyspedas/) for an example of how to use this package.
+
+## References
+
+[santolikSingularValueDecomposition2003](@citet)
+[samsonCommentsDescriptionsPolarization1980](@citet)
+[meansUseThreedimensionalCovariance1972](@citet)
 
 ## Installation
 
@@ -17,4 +23,7 @@ Pkg.add("PlasmaWaves")
 
 ```@autodocs
 Modules = [PlasmaWaves]
+```
+
+```@bibliography
 ```
