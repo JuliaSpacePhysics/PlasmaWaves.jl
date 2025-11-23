@@ -11,7 +11,7 @@ module PlasmaWaves
 using FFTW
 using LinearAlgebra
 using StaticArrays
-using SpaceDataModel: times, cadence
+using SpaceDataModel: unwrap, times, cadence, SpaceDataModel
 
 using Tullio, Bumper
 using PrecompileTools
@@ -41,10 +41,11 @@ Polarization analysis of time series data `X` (each column is a component) of sa
 twavpol_svd(x; kwargs...) = _twavpol(wavpol_svd, x; kwargs...)
 
 # Internal function for dispatch
-function _twavpol(f, x; fs = nothing, nfft = 256, noverlap = div(nfft, 2), kwargs...)
-    t = times(x)
+@inline function _twavpol(f, x; fs = nothing, nfft = 256, noverlap = div(nfft, 2), dim = nothing, kwargs...)
+    dim = @something dim 1
+    t = unwrap(SpaceDataModel.dim(x, dim))
     fs = @something fs 1 / cadence(Float64, t)
-    res = f(x, fs; nfft, noverlap, kwargs...)
+    res = f(x, fs; nfft, noverlap, dim, kwargs...)
     return (; times = t[res.indices], res...)
 end
 

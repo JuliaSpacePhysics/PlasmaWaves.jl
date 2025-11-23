@@ -69,3 +69,21 @@ end
     ]
     @test spectral_matrix(X) ≈ spectral_matrix(X', 2)
 end
+
+using Downloads, JLD2
+
+function get_test_data(url)
+    filename = splitpath(url)[end]
+    localpath = joinpath(@__DIR__, filename)
+    isfile(localpath) || Downloads.download(url, localpath)
+    return localpath
+end
+
+@testset "DimensionalData Integration" begin
+    using DimensionalData, UnixTimes
+    thc_scf_fac_url = "https://github.com/JuliaSpacePhysics/PlasmaWaves.jl/releases/download/v0.1.1/thc_scf_fac.jld2"
+    fpath = get_test_data(thc_scf_fac_url)
+    @load fpath thc_scf_fac
+    result = twavpol(thc_scf_fac)
+    @test result.power == twavpol(thc_scf_fac').power'
+end
