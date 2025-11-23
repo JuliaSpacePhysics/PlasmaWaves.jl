@@ -89,15 +89,7 @@ A named tuple containing:
 
 See also: [`polarization`](@ref), [`wave_normal_angle`](@ref), [`wpol_helicity`](@ref)
 """
-function wavpol(X, fs = 1; dim = nothing, kw...)
-    dim = @something dim 1
-    in = dim == 1 ? X : X'
-    out = _wavpol(in, fs; kw...)
-    return dim == 1 ? out : map(_transpose, out)
-end
-
-_transpose(x) = x
-_transpose(x::AbstractMatrix) = x'
+wavpol(X, args...; kw...) = _transpose(_wavpol, X, args...; kw...)
 
 function _wavpol(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nfft, 2), smooth_t = _smooth_t(nfft), smooth_f = _hamming3()) where {T}
     n = 3
