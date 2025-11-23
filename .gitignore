@@ -2,3 +2,4 @@
 
 # Julia
 Manifest.toml
+*.jld2
