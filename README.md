@@ -1,6 +1,7 @@
 # PlasmaWaves
 
 [![DOI](https://zenodo.org/badge/1094801941.svg)](https://doi.org/10.5281/zenodo.17657870)
+[![version](https://juliahub.com/docs/General/PlasmaWaves/stable/version.svg)](https://juliahub.com/ui/Packages/General/PlasmaWaves)
 
 [![Build Status](https://github.com/JuliaSpacePhysics/PlasmaWaves.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaSpacePhysics/PlasmaWaves.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/JuliaSpacePhysics/PlasmaWaves.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaSpacePhysics/PlasmaWaves.jl)
@@ -9,7 +10,7 @@ Wave analysis for (space) plasmas, built in Julia.
 
 **Installation**: at the Julia REPL, run `using Pkg; Pkg.add("PlasmaWaves")`
 
-**Documentation**: [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaSpacePhysics.github.io/PlasmaWaves.jl/dev/)
+**Documentation**: [![Dev](https://img.shields.io/badge/docs-dev-blue.svg?logo=julia)](https://JuliaSpacePhysics.github.io/PlasmaWaves.jl/dev/)
 
 ## Features and Roadmap
 
