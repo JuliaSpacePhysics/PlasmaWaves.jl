@@ -86,4 +86,7 @@ end
     @load fpath thc_scf_fac
     result = twavpol(thc_scf_fac)
     @test result.power == twavpol(thc_scf_fac').power'
+
+    result2 = twavpol_svd(thc_scf_fac)
+    @test result2.power == twavpol_svd(thc_scf_fac').power'
 end

@@ -27,7 +27,9 @@ function svd_polarization(S::AbstractMatrix)
     return (; theta, phi, planarity, ellipticity)
 end
 
-function wavpol_svd(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nfft, 2), smooth_t = _smooth_t(nfft), smooth_f = _hamming3()) where {T}
+wavpol_svd(X, args...; kw...) = _transpose(_wavpol_svd, X, args...; kw...)
+
+function _wavpol_svd(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nfft, 2), smooth_t = _smooth_t(nfft), smooth_f = _hamming3()) where {T}
     n = 3
     @assert size(X, 2) == n
     N = size(X, 1)

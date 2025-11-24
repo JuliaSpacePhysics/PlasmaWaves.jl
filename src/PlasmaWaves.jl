@@ -17,6 +17,7 @@ using Tullio, Bumper
 using PrecompileTools
 export spectral_matrix, wavpol, twavpol, twavpol_svd, wpol_helicity, polarization
 
+include("utils.jl")
 include("spectral_matrix.jl")
 include("polarization.jl")
 include("helicty.jl")
