@@ -35,3 +35,9 @@ res.waveangle # wave normal angle estimates
 For SVD-derived planarity metrics, call `wavpol_svd` or `twavpol_svd`.
 
 ⚠️ **Development Status**: This package is in active development. While functional, the functionality is not fully tested (it has been cross-validated with a Python implementation in `PySPEDAS`) and the API may undergo changes in future releases. Please test thoroughly before using in scientific work.
+
+
+## Elsewhere
+
+- [BO-Arbitrary](https://github.com/hsxie/boarbitrary/tree/main): Extension of the kinetic electromagnetic magnetized dispersion relation solver [PDRK](https://github.com/hsxie/pdrk)/[BO](https://github.com/hsxie/bo) to arbitrary distributions.
+- [ALPS](https://github.com/danielver02/ALPS): The Arbitrary Linear Plasma Solver that solves the Vlasov-Maxwell dispersion relation in hot (even relativistic) magnetised plasma. 
