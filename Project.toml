@@ -23,7 +23,7 @@ PlasmaWavesDimensionalDataExt = "DimensionalData"
 
 [compat]
 Bumper = "0.7"
-DimensionalData = "0.29"
+DimensionalData = "0.29, 0.30"
 FFTW = "1"
 LinearAlgebra = "1"
 PrecompileTools = "1"
