@@ -10,7 +10,6 @@ Plasma wave analysis.
 module PlasmaWaves
 using FFTW
 using LinearAlgebra
-using StaticArrays
 using SpaceDataModel: unwrap, times, cadence, SpaceDataModel
 
 using Bumper
