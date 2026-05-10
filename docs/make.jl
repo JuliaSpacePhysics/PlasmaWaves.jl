@@ -12,6 +12,7 @@ makedocs(
     modules = [PlasmaWaves],
     pages = [
         "Home" => "index.md",
+        "Validation with PySPEDAS" => "pyspedas.md",
     ],
     checkdocs = :exports,
     plugins = [bib],
@@ -20,4 +21,5 @@ makedocs(
 
 deploydocs(
     repo = "github.com/JuliaSpacePhysics/PlasmaWaves.jl",
+    push_preview = true
 )
