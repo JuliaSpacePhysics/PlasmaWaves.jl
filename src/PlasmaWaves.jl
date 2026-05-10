@@ -13,7 +13,7 @@ using LinearAlgebra
 using StaticArrays
 using SpaceDataModel: unwrap, times, cadence, SpaceDataModel
 
-using Tullio, Bumper
+using Bumper
 using PrecompileTools
 export spectral_matrix, wavpol, twavpol, twavpol_svd, wpol_helicity, polarization
 

@@ -9,11 +9,20 @@ S_{ij}(f) = X_i(f) X_j^*(f),
 
 where ``X_i(f)``=`Xf[f, i]` is the FFT of the ``i``-th component and ``*`` denotes complex conjugation.
 """
-function spectral_matrix(Xf::AbstractMatrix{<:Complex})
-    return @tullio S[i, j, f] := Xf[f, i] * conj(Xf[f, j])
+function spectral_matrix(Xf::AbstractMatrix{T}) where {T <: Complex}
+    S = Array{T}(undef, size(Xf, 2), size(Xf, 2), size(Xf, 1))
+    return spectral_matrix!(S, Xf)
 end
 
-spectral_matrix!(S, Xf) = @tullio S[i, j, f] = Xf[f, i] * conj(Xf[f, j]) threads = false
+function spectral_matrix!(S, Xf)
+    @inbounds for f in axes(Xf, 1), j in axes(Xf, 2)
+        xj = conj(Xf[f, j])
+        for i in axes(Xf, 2)
+            S[i, j, f] = Xf[f, i] * xj
+        end
+    end
+    return S
+end
 
 """
     spectral_matrix(X, dim = 1)
