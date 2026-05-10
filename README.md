@@ -17,12 +17,10 @@ res.waveangle # wave normal angle estimates
 
 For SVD-derived planarity metrics, call `wavpol_svd` or `twavpol_svd`.
 
-## Features and Roadmap
+## Features and 
 
 - [x] Wave polarization analysis with degree of polarization, wave normal angle, helicity, ellipticity, and planarity metrics
-- [ ] Wave propagation analysis
-  - [x] SVD of the magnetic spectral matrix
-  - [ ] Electromagnetic SVD
+- [x] Wave propagation analysis using SVD of magnetic field
 
 See [Wave polarization cross-validation with PySPEDAS](https://juliaspacephysics.github.io/SPEDAS.jl/dev/validation/pyspedas/) for comparison and benchmarking against PySPEDAS implementation.
 

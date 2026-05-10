@@ -1,12 +1,11 @@
 # PlasmaWaves.jl
 
 [![DOI](https://zenodo.org/badge/1094801941.svg)](https://doi.org/10.5281/zenodo.17657870)
+[![version](https://juliahub.com/docs/General/PlasmaWaves/stable/version.svg)](https://juliahub.com/ui/Packages/General/PlasmaWaves)
 
 ```@docs
 PlasmaWaves
 ```
-
-See [Wave polarization cross-validation with PySPEDAS](https://juliaspacephysics.github.io/SPEDAS.jl/dev/validation/pyspedas/) for an example of how to use this package.
 
 ## References
 
