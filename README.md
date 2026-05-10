@@ -1,28 +1,11 @@
 # PlasmaWaves
 
-[![DOI](https://zenodo.org/badge/1094801941.svg)](https://doi.org/10.5281/zenodo.17657870)
-[![version](https://juliahub.com/docs/General/PlasmaWaves/stable/version.svg)](https://juliahub.com/ui/Packages/General/PlasmaWaves)
-
-[![Build Status](https://github.com/JuliaSpacePhysics/PlasmaWaves.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaSpacePhysics/PlasmaWaves.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/JuliaSpacePhysics/PlasmaWaves.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaSpacePhysics/PlasmaWaves.jl)
-
-Wave analysis for (space) plasmas, built in Julia.
-
-**Installation**: at the Julia REPL, run `using Pkg; Pkg.add("PlasmaWaves")`
-
-**Documentation**: [![Dev](https://img.shields.io/badge/docs-dev-blue.svg?logo=julia)](https://JuliaSpacePhysics.github.io/PlasmaWaves.jl/dev/)
-
-## Features and Roadmap
-
-- [x] Wave polarization analysis with degree of polarization, wave normal angle, helicity, ellipticity, and planarity metrics
-- [ ] Wave propagation analysis
-  - [x] SVD of the magnetic spectral matrix
-  - [ ] Electromagnetic SVD
-- [ ] Wave dispersion relation analysis
+Wave analysis for (space) plasmas.
 
 ## Quick start
 
 ```julia
+using Pkg; Pkg.add("PlasmaWaves")
 using PlasmaWaves
 
 # X is an N×3 array of field-aligned magnetic fluctuations
@@ -34,4 +17,25 @@ res.waveangle # wave normal angle estimates
 
 For SVD-derived planarity metrics, call `wavpol_svd` or `twavpol_svd`.
 
-⚠️ **Development Status**: This package is in active development. While functional, the functionality is not fully tested (it has been cross-validated with a Python implementation in `PySPEDAS`) and the API may undergo changes in future releases. Please test thoroughly before using in scientific work.
+## Features and Roadmap
+
+- [x] Wave polarization analysis with degree of polarization, wave normal angle, helicity, ellipticity, and planarity metrics
+- [ ] Wave propagation analysis
+  - [x] SVD of the magnetic spectral matrix
+  - [ ] Electromagnetic SVD
+
+See [Wave polarization cross-validation with PySPEDAS](https://juliaspacephysics.github.io/SPEDAS.jl/dev/validation/pyspedas/) for comparison and benchmarking against PySPEDAS implementation.
+
+## Elsewhere
+
+- [PlasmaBO.jl](https://github.com/JuliaSpacePhysics/PlasmaBO.jl) for wave dispersion relation analysis.
+
+## Status
+
+⚠️ **Development Status**: This package is in active development. While functional, the functionality is not fully tested (it has been cross-validated with a Python implementation in `PySPEDAS`). Please test thoroughly for scientific work.
+
+[![DOI](https://zenodo.org/badge/1094801941.svg)](https://doi.org/10.5281/zenodo.17657870)
+[![version](https://juliahub.com/docs/General/PlasmaWaves/stable/version.svg)](https://juliahub.com/ui/Packages/General/PlasmaWaves)
+
+[![Build Status](https://github.com/JuliaSpacePhysics/PlasmaWaves.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaSpacePhysics/PlasmaWaves.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Coverage](https://codecov.io/gh/JuliaSpacePhysics/PlasmaWaves.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaSpacePhysics/PlasmaWaves.jl)
