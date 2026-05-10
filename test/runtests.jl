@@ -13,31 +13,26 @@ end
     @test_call PlasmaWaves.workload()
 end
 
-@testset "svd of spectral matrix" begin
-    a = 3.5
-    b = 1.2
+@testset "svd_polarization" begin
+    # RHCP wave in xy-plane propagating along z: Xf = [a, ib, 0]
+    # → S[1,2] = -iab, wave normal = ẑ, planarity = 1, ellipticity = -b/a
+    a, b = 3.5, 1.2
     Xf = zeros(ComplexF64, 1, 3)
     Xf[1, 1] = a
     Xf[1, 2] = 1im * b
-    S = spectral_matrix(Xf)
-    Sf = @view S[:, :, 1]
+    S3d = spectral_matrix(Xf)
+    Sf = @view S3d[:, :, 1]
+    @test Sf ≈ [a^2 -im*a*b 0; im*a*b b^2 0; 0 0 0]
+    res = PlasmaWaves.svd_polarization(Sf)
+    @test res.theta ≈ 0
+    @test res.planarity ≈ 1.0
+    @test res.ellipticity ≈ -b / a
 
-    @test Sf ≈ [a^2 -im * a * b 0; im * a * b b^2 0; 0 0 0]
-    A = [
-        a^2     0     0;
-        0       b^2   0;
-        0       0     0;
-        0       a * b 0;
-        -a * b  0     0;
-        0       0     0
-    ]
-    U, S, V = PlasmaWaves.svd_S(Sf)
-    @test U * Diagonal(S) * V' ≈ A
-    @test S ≈ [a * sqrt(a^2 + b^2), b * sqrt(a^2 + b^2), 0]
-    s = Base.sign(U[1, 1])
-    @test s * U[1, 1] ≈ a / sqrt(a^2 + b^2) + 0im
-    @test s * U[2, 2] ≈ b / sqrt(a^2 + b^2) + 0im
-    @test s * U[4, 2] ≈ a / sqrt(a^2 + b^2) + 0im
+    # Wave normal along x: Gram matrix has a11=λ₃=0, a12=a13=0
+    S_x = ComplexF64[0 0 0; 0 4.0 2.0; 0 2.0 8.0]
+    res_x = PlasmaWaves.svd_polarization(S_x)
+    @test !any(isnan, (res_x.theta, res_x.phi, res_x.planarity, res_x.ellipticity))
+    @test res_x.theta ≈ π / 2
 end
 
 @testset "Spectral matrix from time sequence" begin

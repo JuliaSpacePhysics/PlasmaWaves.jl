@@ -20,8 +20,14 @@ p^2  &= 1-\\frac{(tr 𝐒)^2-(tr 𝐒^2)}{(tr 𝐒)^2-n^{-1}(tr 𝐒)^2} \\\\
 """
 function polarization(S)
     n = size(S, 1)
-    trS2 = tr(S * S)
-    trS = tr(S)
+    trS = zero(eltype(S))
+    trS2 = zero(eltype(S))
+    @inbounds for i in axes(S, 1)
+        trS += S[i, i]
+        for j in axes(S, 2)
+            trS2 += S[i, j] * S[j, i]
+        end
+    end
     return real((n * trS2 - trS^2) / ((n - 1) * trS^2))
 end
 
@@ -110,7 +116,6 @@ function _wavpol(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nfft, 
 
     plan = plan_rfft(zeros(T, nfft, n), 1)
 
-    SfType = SMatrix{n, n, Complex{T}}
     Threads.@threads for j in 1:nsteps
         @no_escape begin
             Xw = @alloc(T, nfft, n)
@@ -127,7 +132,7 @@ function _wavpol(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nfft, 
             smooth_spectral_matrix!(Sm, S, smooth_f)
             # Compute the following polarization parameters from the spectral matrix ``S``:
             for f in 1:Nfreq
-                Sf = SfType(view(Sm, :, :, f))
+                Sf = @view Sm[:, :, f]
                 power[j, f] = real(tr(Sf))
                 degpol[j, f] = polarization(Sf)
                 waveangle[j, f] = wave_normal_angle(Sf)
