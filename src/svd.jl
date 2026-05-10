@@ -40,7 +40,7 @@ function _wavpol_svd(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nf
     nsteps = floor(Int, (N - nfft) / noverlap) + 1
     indices = 1 .+ (0:(nsteps - 1)) * noverlap .+ div(nfft, 2)
     # normalize the smooth window for frequency smoothing
-    smooth_f = smooth_f / sum(smooth_f)
+    smooth_f = smooth_f ./ sum(smooth_f)
 
     # Preallocate arrays for the results.
     power = zeros(T, nsteps, Nfreq)
@@ -50,7 +50,6 @@ function _wavpol_svd(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nf
 
     plan = plan_rfft(zeros(T, nfft, n), 1)
 
-    SfType = SMatrix{n, n, Complex{T}}
     # tforeach(1:nsteps) do j
     Threads.@threads for j in 1:nsteps
         # tforeach(1:nsteps) do j
@@ -68,7 +67,7 @@ function _wavpol_svd(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nf
             spectral_matrix!(S, Xf)
             smooth_spectral_matrix!(Sm, S, smooth_f)
             for f in 1:Nfreq
-                Sf = @views SfType(Sm[:, :, f])
+                Sf = @views Sm[:, :, f]
                 res = svd_polarization(Sf)
                 power[j, f] = real(tr(Sf))
                 planarity[j, f] = res.planarity

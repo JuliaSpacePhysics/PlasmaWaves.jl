@@ -52,7 +52,7 @@ end
 _smooth_t(nfft) = let xs = 0:(nfft - 1)
     @. 0.54 - 0.46 * cos(2π * (xs / nfft))
 end
-_hamming3() = SA[0.08, 1, 0.08]
+_hamming3() = (0.08, 1, 0.08)
 
 """
     wavpol(X, fs=1; nfft=256, noverlap=div(nfft, 2), smooth_t=_smooth_t(nfft), smooth_f=_hamming3())
@@ -102,7 +102,7 @@ function _wavpol(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nfft, 
     nsteps = floor(Int, (N - nfft) / noverlap) + 1
     indices = 1 .+ (0:(nsteps - 1)) * noverlap .+ div(nfft, 2)
     # normalize the smooth window for frequency smoothing
-    smooth_f = smooth_f / sum(smooth_f)
+    smooth_f = smooth_f ./ sum(smooth_f)
 
     # Preallocate arrays for the results.
     power, degpol, waveangle, ellipticity, helicity =
