@@ -1,16 +1,26 @@
+using Pkg
+# prereleases often have no installable JET.
+const RUN_JET_TESTS = isempty(VERSION.prerelease)
+RUN_JET_TESTS && Pkg.add("JET")
+
 using Test
 using PlasmaWaves
 using LinearAlgebra
-using JET: @test_call
 
 @testset "Aqua" begin
     using Aqua
     Aqua.test_all(PlasmaWaves)
 end
 
-@testset "JET" begin
+@testset "workload" begin
     @test_nowarn PlasmaWaves.workload()
-    @test_call PlasmaWaves.workload()
+end
+
+if RUN_JET_TESTS
+    using JET
+    @testset "JET" begin
+        JET.test_call(PlasmaWaves.workload, ())
+    end
 end
 
 @testset "svd_polarization" begin
