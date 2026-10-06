@@ -19,6 +19,7 @@ export spectral_matrix, wavpol, twavpol, twavpol_svd, wpol_helicity, polarizatio
 include("utils.jl")
 include("spectral_matrix.jl")
 include("polarization.jl")
+include("svd.jl")
 include("helicty.jl")
 include("Stokes.jl")
 

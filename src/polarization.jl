@@ -4,8 +4,6 @@
 # https://pyspedas.readthedocs.io/en/latest/_modules/pyspedas/analysis/twavpol.html
 # https://github.com/spedas/pyspedas/blob/master/pyspedas/analysis/twavpol.py
 
-include("./svd.jl")
-
 """
     polarization(S)
 
@@ -33,24 +31,15 @@ end
 
 
 """
-Wave normal angle is the angle between (wnx, wny) and the vertical |wnz|
-Use the imaginary parts of off-diagonals.
-Define:``A = Im(S₁₂), B = Im(S₁₃), C = Im(S₂₃)``
+    wave_normal_angle(S)
+
+Angle between the wave vector and z from the imaginary part of the spectral matrix `S` (Means 1972):
+``𝐤 ∥ (Im S_{23}, -Im S_{13}, Im S_{12})``, folded into [0, π/2] since the sign of ``𝐤`` is undetermined.
+NaN when ``Im S = 0``.
 """
 function wave_normal_angle(S)
-    A = imag(S[1, 2])
-    B = imag(S[1, 3])
-    C = imag(S[2, 3])
-    aaa2 = sqrt(A^2 + B^2 + C^2)
-    return if aaa2 != 0
-        # Normalize contributions to get directional cosines.
-        wnx = abs(C / aaa2)
-        wny = -abs(B / aaa2)
-        wnz = A / aaa2
-        atan(sqrt(wnx^2 + wny^2), abs(wnz))
-    else
-        NaN
-    end
+    A, B, C = imag(S[1, 2]), imag(S[1, 3]), imag(S[2, 3])
+    return iszero(A) && iszero(B) && iszero(C) ? oftype(A, NaN) : atan(hypot(B, C), abs(A))
 end
 
 # https://github.com/spedas/pyspedas/blob/master/pyspedas/analysis/twavpol.py#L450
@@ -97,22 +86,29 @@ See also: [`polarization`](@ref), [`wave_normal_angle`](@ref), [`wpol_helicity`]
 """
 wavpol(X, args...; kw...) = _transpose(_wavpol, X, args...; kw...)
 
-function _wavpol(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nfft, 2), smooth_t = _smooth_t(nfft), smooth_f = _hamming3()) where {T}
+_wavpol(X, fs = 1; kw...) = _spectral_analysis(_wavpol_kernel, X, fs; kw...)
+
+function _wavpol_kernel(S)
+    waveangle = wave_normal_angle(S)
+    helicity, ellipticity = wpol_helicity(S, waveangle)
+    return (; degpol = polarization(S), waveangle, ellipticity, helicity)
+end
+
+# Windowed FFT → smoothed spectral matrix → `kernel(S)::NamedTuple` per (window, frequency).
+function _spectral_analysis(kernel, X::AbstractMatrix{T}, fs; nfft = 256, noverlap = div(nfft, 2), smooth_t = _smooth_t(nfft), smooth_f = _hamming3()) where {T}
     n = 3
     @assert size(X, 2) == n
     N = size(X, 1)
     Nfreq = div(nfft, 2) + 1
     freqs = (fs / nfft) * (0:(Nfreq - 1))
 
-    # Define the number of FFT windows
     nsteps = floor(Int, (N - nfft) / noverlap) + 1
     indices = 1 .+ (0:(nsteps - 1)) * noverlap .+ div(nfft, 2)
-    # normalize the smooth window for frequency smoothing
     smooth_f = smooth_f ./ sum(smooth_f)
 
-    # Preallocate arrays for the results.
-    power, degpol, waveangle, ellipticity, helicity =
-        ntuple(_ -> zeros(T, nsteps, Nfreq), 5)
+    power = zeros(T, nsteps, Nfreq)
+    # The probe call only fixes the output names.
+    outs = map(_ -> zeros(T, nsteps, Nfreq), kernel(zeros(Complex{T}, n, n)))
 
     plan = plan_rfft(zeros(T, nfft, n), 1)
 
@@ -127,23 +123,19 @@ function _wavpol(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nfft, 
             end_idx = start_idx + nfft - 1
             Xw .= view(X, start_idx:end_idx, :) .* smooth_t
             mul!(Xf, plan, Xw)
-            Xf ./= nfft # Normalize
+            Xf ./= nfft
             spectral_matrix!(S, Xf)
             smooth_spectral_matrix!(Sm, S, smooth_f)
-            # Compute the following polarization parameters from the spectral matrix ``S``:
             for f in 1:Nfreq
                 Sf = @view Sm[:, :, f]
                 power[j, f] = real(tr(Sf))
-                degpol[j, f] = polarization(Sf)
-                waveangle[j, f] = wave_normal_angle(Sf)
-                helicity[j, f], ellipticity[j, f] = wpol_helicity(Sf, waveangle[j, f])
+                map((o, v) -> (o[j, f] = v), outs, kernel(Sf))
             end
         end
     end
 
-    # Scaling power results to units with meaning
     binwidth = fs / nfft
     W = sum(smooth_t .^ 2) / nfft
     power_s = power * 2 / (binwidth * W)
-    return (; indices, freqs, power = power_s, degpol, waveangle, ellipticity, helicity)
+    return (; indices, freqs, power = power_s, outs...)
 end

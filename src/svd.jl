@@ -69,55 +69,9 @@ end
 
 wavpol_svd(X, args...; kw...) = _transpose(_wavpol_svd, X, args...; kw...)
 
-function _wavpol_svd(X::AbstractMatrix{T}, fs = 1; nfft = 256, noverlap = div(nfft, 2), smooth_t = _smooth_t(nfft), smooth_f = _hamming3()) where {T}
-    n = 3
-    @assert size(X, 2) == n
-    N = size(X, 1)
-    Nfreq = div(nfft, 2) + 1
-    freqs = (fs / nfft) * (0:(Nfreq - 1))
+_wavpol_svd(X, fs = 1; kw...) = _spectral_analysis(_svd_kernel, X, fs; kw...)
 
-    # Define the number of FFT windows
-    nsteps = floor(Int, (N - nfft) / noverlap) + 1
-    indices = 1 .+ (0:(nsteps - 1)) * noverlap .+ div(nfft, 2)
-    # normalize the smooth window for frequency smoothing
-    smooth_f = smooth_f ./ sum(smooth_f)
-
-    # Preallocate arrays for the results.
-    power = zeros(T, nsteps, Nfreq)
-    planarity = zeros(T, nsteps, Nfreq)
-    waveangle = zeros(T, nsteps, Nfreq)
-    ellipticity = zeros(T, nsteps, Nfreq)
-
-    plan = plan_rfft(zeros(T, nfft, n), 1)
-
-    Threads.@threads for j in 1:nsteps
-        @no_escape begin
-            Xw = @alloc(T, nfft, n)
-            Xf = @alloc(Complex{T}, Nfreq, n)
-            S = @alloc(Complex{T}, n, n, Nfreq)
-            Sm = @alloc(Complex{T}, n, n, Nfreq)
-            start_idx = 1 + (j - 1) * noverlap
-            end_idx = start_idx + nfft - 1
-            Xw .= view(X, start_idx:end_idx, :) .* smooth_t
-            mul!(Xf, plan, Xw)
-            Xf ./= nfft # normalize
-            spectral_matrix!(S, Xf)
-            smooth_spectral_matrix!(Sm, S, smooth_f)
-            for f in 1:Nfreq
-                Sf = @views Sm[:, :, f]
-                res = svd_polarization(Sf)
-                power[j, f] = real(tr(Sf))
-                planarity[j, f] = res.planarity
-                waveangle[j, f] = res.theta
-                ellipticity[j, f] = res.ellipticity
-            end
-        end
-    end
-
-    # Scaling power results to units with meaning
-    binwidth = fs / nfft
-    W = sum(smooth_t .^ 2) / nfft
-    power_s = power * 2 / (binwidth * W)
-
-    return (; indices, freqs, power = power_s, planarity, waveangle, ellipticity)
+function _svd_kernel(S)
+    (; theta, planarity, ellipticity) = svd_polarization(S)
+    return (; planarity, waveangle = theta, ellipticity)
 end
