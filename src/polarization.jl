@@ -89,9 +89,8 @@ wavpol(X, args...; kw...) = _transpose(_wavpol, X, args...; kw...)
 _wavpol(X, fs = 1; kw...) = _spectral_analysis(_wavpol_kernel, X, fs; kw...)
 
 function _wavpol_kernel(S)
-    waveangle = wave_normal_angle(S)
-    helicity, ellipticity = wpol_helicity(S, waveangle)
-    return (; degpol = polarization(S), waveangle, ellipticity, helicity)
+    helicity, ellipticity = wpol_helicity(S)
+    return (; degpol = polarization(S), waveangle = wave_normal_angle(S), ellipticity, helicity)
 end
 
 # Windowed FFT → smoothed spectral matrix → `kernel(S)::NamedTuple` per (window, frequency).

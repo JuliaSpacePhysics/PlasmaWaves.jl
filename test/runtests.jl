@@ -74,6 +74,32 @@ end
     @test spectral_matrix(X) ≈ spectral_matrix(X', 2)
 end
 
+@testset "elliptical wave" begin
+    # Ellipse with axes 1 and b, rotating right-handed about k̂, which is tilted by θ from z
+    b, nfft = 0.6, 256
+    t = 0:2047
+    ω = 2π * 20 / nfft # centred on bin 21
+    for θ in (0.0, π / 6, π / 3)
+        e1, e2 = [cos(θ), 0, -sin(θ)], [0, 1, 0]
+        X = cos.(ω .* t) * e1' .+ b .* sin.(ω .* t) * e2'
+        r = wavpol(X; nfft)
+        @test all(≈(1), r.degpol[:, 21])
+        @test all(x -> isapprox(x, θ; atol = 1.0e-8), r.waveangle[:, 21])
+        @test all(≈(b), r.helicity[:, 21])
+        # (x, y) projection has axes cos θ and b; which is major flips at θ = π/3
+        @test all(≈(min(b / cos(θ), cos(θ) / b)), r.ellipticity[:, 21])
+        r = PlasmaWaves.wavpol_svd(X; nfft)
+        @test all(x -> isapprox(x, 1; atol = 1.0e-3), r.planarity[:, 21]) # Gram matrix: ~eps^¼
+        @test all(x -> isapprox(x, θ; atol = 1.0e-6), r.waveangle[:, 21])
+        @test all(≈(b), r.ellipticity[:, 21])
+    end
+    # Expected spectral matrix of a parallel wave over white noise: the z row holds only noise
+    v = [1, -b * im, 0]
+    h, e = PlasmaWaves.wpol_helicity(1.0e4 * v * v' + I)
+    @test h ≈ b rtol = 1.0e-3
+    @test e ≈ b rtol = 1.0e-3
+end
+
 @testset "wavpol windows" begin
     X = randn(1024, 3)
     @test wavpol(X; nfft = 256, noverlap = 192).indices == 129:64:897
