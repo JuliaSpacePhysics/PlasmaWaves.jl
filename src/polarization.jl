@@ -104,7 +104,11 @@ function _spectral_analysis(kernel, X::AbstractMatrix{T}, fs; nfft = 256, noverl
 
     nsteps = floor(Int, (N - nfft) / noverlap) + 1
     indices = 1 .+ (0:(nsteps - 1)) * noverlap .+ div(nfft, 2)
-    smooth_f = smooth_f ./ sum(smooth_f)
+    aa = map(T, smooth_f ./ sum(smooth_f))
+    window = smooth_t ./ nfft # FFT normalization folded in
+    binwidth = fs / nfft
+    W = sum(abs2, smooth_t) / nfft
+    scale = 2 / (binwidth * W)
 
     power = zeros(T, nsteps, Nfreq)
     # The probe call only fixes the output names.
@@ -116,26 +120,16 @@ function _spectral_analysis(kernel, X::AbstractMatrix{T}, fs; nfft = 256, noverl
         @no_escape begin
             Xw = @alloc(T, nfft, n)
             Xf = @alloc(Complex{T}, Nfreq, n)
-            S = @alloc(Complex{T}, n, n, Nfreq)
-            Sm = @alloc(Complex{T}, n, n, Nfreq)
-
-            start_idx = 1 + (j - 1) * noverlap
-            end_idx = start_idx + nfft - 1
-            Xw .= view(X, start_idx:end_idx, :) .* smooth_t
+            Sf = @alloc(Complex{T}, n, n)
+            start = 1 + (j - 1) * noverlap
+            Xw .= view(X, start:(start + nfft - 1), :) .* window
             mul!(Xf, plan, Xw)
-            Xf ./= nfft
-            spectral_matrix!(S, Xf)
-            smooth_spectral_matrix!(Sm, S, smooth_f)
             for f in 1:Nfreq
-                Sf = @view Sm[:, :, f]
-                power[j, f] = real(tr(Sf))
+                smoothed_spectral_matrix!(Sf, Xf, aa, f)
+                power[j, f] = scale * real(tr(Sf))
                 map((o, v) -> (o[j, f] = v), outs, kernel(Sf))
             end
         end
     end
-
-    binwidth = fs / nfft
-    W = sum(smooth_t .^ 2) / nfft
-    power_s = power * 2 / (binwidth * W)
-    return (; indices, freqs, power = power_s, outs...)
+    return (; indices, freqs, power, outs...)
 end

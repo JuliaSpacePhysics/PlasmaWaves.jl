@@ -37,23 +37,22 @@ function spectral_matrix(X::AbstractMatrix{<:Real}, dim = 1)
     return dim == 1 ? spectral_matrix(Xf) : spectral_matrix(transpose(Xf))
 end
 
-"""
-    smooth_spectral_matrix!(S_smooth, S, aa)
-
-In-place version of `smooth_spectral_matrix` that writes results to a pre-allocated array.
-"""
-function smooth_spectral_matrix!(S_smooth, S, aa)
-    Nfreq = size(S, 3)
-    M = length(aa)
-    halfM = div(M, 2)
-    # For boundary frequencies, copy original S
-    S_smooth[:, :, 1:halfM] .= @view S[:, :, 1:halfM]
-    @inbounds for f in (halfM + 1):(Nfreq - halfM), j in axes(S, 2), i in axes(S, 1)
-        S_smooth[i, j, f] = sum(1:M) do k
-            aa[k] * S[i, j, f - halfM + k - 1]
+# `S = Σₖ aa[k] Xf[g, :] * Xf[g, :]'` over the bins g centred on `f`; unsmoothed where the window would run off the ends.
+function smoothed_spectral_matrix!(S, Xf, aa, f)
+    h = length(aa) ÷ 2
+    edge = !(h < f <= size(Xf, 1) - h)
+    @inbounds for j in axes(Xf, 2), i in 1:j
+        acc = zero(eltype(S))
+        if edge
+            acc = Xf[f, i] * conj(Xf[f, j])
+        else
+            for k in eachindex(aa)
+                g = f - h + k - 1
+                acc += aa[k] * (Xf[g, i] * conj(Xf[g, j]))
+            end
         end
+        S[i, j] = acc
+        S[j, i] = conj(acc)
     end
-    slices = (Nfreq - halfM + 1):Nfreq
-    S_smooth[:, :, slices] .= @view S[:, :, slices]
-    return S_smooth
+    return S
 end

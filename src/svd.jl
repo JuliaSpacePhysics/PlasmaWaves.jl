@@ -62,7 +62,7 @@ function svd_polarization(S::AbstractMatrix)
     v3 *= s
     theta = atan(sqrt(v1^2 + v2^2), v3)
     phi = atan(v2, v1)
-    planarity = 1.0 - (max(λ3, 0) / λ1)^(1 // 4)
+    planarity = 1 - sqrt(sqrt(max(λ3, 0) / λ1))
     ellipticity = sqrt(max(λ2, 0) / λ1) * sign(imag(S[1, 2]))
     return (; theta, phi, planarity, ellipticity)
 end

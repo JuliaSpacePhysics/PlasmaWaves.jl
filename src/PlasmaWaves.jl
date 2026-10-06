@@ -20,7 +20,7 @@ include("utils.jl")
 include("spectral_matrix.jl")
 include("polarization.jl")
 include("svd.jl")
-include("helicty.jl")
+include("helicity.jl")
 include("Stokes.jl")
 
 """
