@@ -33,6 +33,15 @@ end
     res_x = PlasmaWaves.svd_polarization(S_x)
     @test !any(isnan, (res_x.theta, res_x.phi, res_x.planarity, res_x.ellipticity))
     @test res_x.theta ≈ π / 2
+
+    # Planar wave (S has no component along its normal n̂) in Float32
+    planarity = map(1:1000) do _
+        n̂ = normalize(randn(Float32, 3))
+        P = I - n̂ * n̂'
+        u, v = P * randn(ComplexF32, 3), P * randn(ComplexF32, 3)
+        PlasmaWaves.svd_polarization(u * u' + v * v').planarity
+    end
+    @test minimum(planarity) > 0.99
 end
 
 @testset "Spectral matrix from time sequence" begin

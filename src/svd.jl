@@ -11,11 +11,14 @@ end
 
 # Upper triangle of B^T B, where B is the 6×3 real matrix [Re(S); skew(Im(S))] for 3×3 Hermitian S.
 # This equals the Gram matrix whose eigenvalues give SVD singular values squared.
+# Squaring also squares the condition number, so it is formed in at least Float64:
+# in Float32, planarity of an exactly planar wave came out as low as 0.9.
 @inbounds function _gram_upper(S)
-    r11, r22, r33 = real(S[1, 1]), real(S[2, 2]), real(S[3, 3])
-    r12, i12 = reim(S[1, 2])
-    r13, i13 = reim(S[1, 3])
-    r23, i23 = reim(S[2, 3])
+    R = promote_type(Float64, real(eltype(S)))
+    r11, r22, r33 = R(real(S[1, 1])), R(real(S[2, 2])), R(real(S[3, 3]))
+    r12, i12 = reim(Complex{R}(S[1, 2]))
+    r13, i13 = reim(Complex{R}(S[1, 3]))
+    r23, i23 = reim(Complex{R}(S[2, 3]))
 
     a11 = r11^2 + r12^2 + r13^2 + i12^2 + i13^2
     a22 = r12^2 + r22^2 + r23^2 + i12^2 + i23^2
