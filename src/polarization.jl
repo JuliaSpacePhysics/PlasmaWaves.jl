@@ -42,8 +42,6 @@ function wave_normal_angle(S)
     return iszero(A) && iszero(B) && iszero(C) ? oftype(A, NaN) : atan(hypot(B, C), abs(A))
 end
 
-# https://github.com/spedas/pyspedas/blob/master/pyspedas/analysis/twavpol.py#L450
-# Reduced spectral leakage: The FFT spectrum becomes smoother, peaks clearer.
 _smooth_t(nfft) = let xs = 0:(nfft - 1)
     @. 0.54 - 0.46 * cos(2π * (xs / nfft))
 end
@@ -63,10 +61,9 @@ The analysis assumes the data are in a right-handed, field-aligned coordinate sy
 (with Z along the ambient magnetic field).
 
 # Keywords
-- `nfft`: Number of points for FFT (default: 256)
-- `noverlap`: Number of samples shared by consecutive windows (default: nfft÷2)
-- `smooth_t`: Time domain window function (default: Hann window)
-- `smooth_f`: Frequency domain smoothing window of odd length (default: 3-point Hamming window)
+- `noverlap`: Number of samples shared by consecutive windows
+- `smooth_t`: Time-domain window of length `nfft` (default: Hamming)
+- `smooth_f`: Frequency-domain smoothing weights of odd length (default: 3-point Hamming)
 
 # Returns
 A named tuple containing:
@@ -79,8 +76,7 @@ A named tuple containing:
 - `helicity`: Wave helicity
 
 # Notes
-- `smooth_f` is needed because otherwise the rank of the spectral matrix ``S̃(f)`` is 1, yielding a constant (fully polarized) result ``degpol(f) = 1``. Frequency smoothing introduces ensemble averaging, corresponding to different realizations, so ``S̃(f)`` gains fuller rank. The `length(smooth_f) ÷ 2` bins at each end, where the smoothing window does not fit, report only `power`; the other outputs are NaN there.
--  The cross-spectral density matrix ``S(f)`` is the Fourier transform of ``R(τ) = <X(t) X(t+τ)^†>`` ([Wiener-Khinchin theorem](https://en.wikipedia.org/wiki/Wiener%E2%80%93Khinchin_theorem)).
+`smooth_f` is needed because otherwise the rank of the spectral matrix ``S̃(f)`` is 1, yielding a constant (fully polarized) result ``degpol(f) = 1``. Frequency smoothing introduces ensemble averaging, corresponding to different realizations, so ``S̃(f)`` gains fuller rank. The `length(smooth_f) ÷ 2` bins at each end, where the smoothing window does not fit, report only `power`; the other outputs are NaN there.
 
 See also: [`polarization`](@ref), [`wave_normal_angle`](@ref), [`wpol_helicity`](@ref)
 """

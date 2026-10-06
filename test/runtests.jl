@@ -14,7 +14,7 @@ end
 end
 
 @testset "svd_polarization" begin
-    # RHCP wave in xy-plane propagating along z: Xf = [a, ib, 0]
+    # Wave in the xy-plane rotating x → -y (left-handed about z): Xf = [a, ib, 0]
     # → S[1,2] = -iab, wave normal = ẑ, planarity = 1, ellipticity = -b/a
     a, b = 3.5, 1.2
     Xf = zeros(ComplexF64, 1, 3)

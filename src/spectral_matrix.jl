@@ -29,8 +29,7 @@ end
 
 Compute the spectral matrix ``S(f)`` given the time series data `X` along dimension `dim`.
 
-Returns a 3-D array of size ``n, n, N_{freq}``, where ``N_{freq} = \\lfloor N/2 \\rfloor`` 
-    and `n` is the dimensionality (number of components).
+Returns a 3-D array of size ``n × n × (\\lfloor N/2 \\rfloor + 1)`` for `n` components of length `N`.
 """
 function spectral_matrix(X::AbstractMatrix{<:Real}, dim = 1)
     Xf = rfft(X, dim)

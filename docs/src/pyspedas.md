@@ -10,6 +10,7 @@ using PlasmaWaves
 using PySPEDAS, PythonCall
 using DimensionalData
 using PySPEDAS: get_data
+using SpaceDataModel
 using CairoMakie, SpacePhysicsMakie
 ```
 
@@ -29,9 +30,17 @@ py_tvars = [
 ]
 # PySPEDAS returns non valid values at the first and last frequency bin, the last time bin is also not valid
 _subset_py(x) = x[1:end-1,2:end-1]
-py_result = DimStack(_subset_py.(DimArray.(get_data.(py_tvars))))
-py_result.thc_scf_fac_powspec.metadata[:colorscale] = log10
-py_result.thc_scf_fac_helict.metadata[:colorscale] = identity
+# The PySPEDAS metadata is a Python-backed dict that cannot hold Julia functions, so copy it
+function _colorscale(x, f)
+    meta = Dict{Any,Any}(:colorscale => f, pairs(metadata(x))...)
+    rebuild(x; metadata = SpaceDataModel.SchemaDict(SpaceDataModel.get_schema(x), meta))
+end
+py_arrays = _subset_py.(DimArray.(get_data.(py_tvars)))
+py_result = DimStack([
+    _colorscale(py_arrays[1], log10),
+    py_arrays[2:end-1]...,
+    _colorscale(py_arrays[end], identity),
+])
 res = twavpol(thc_scf_fac)
 
 f = Figure(; size=(1200, 800))
@@ -39,6 +48,11 @@ tplot(f[1,1], py_result)
 tplot(f[1,2], res)
 f
 ```
+
+Intended differences from PySPEDAS:
+- `power` at the first and last bin is not doubled (one-sided PSD), and the Nyquist bin is kept.
+- Polarization parameters are NaN at the edge bins instead of undefined values.
+- `helicity` and `ellipticity` weight the rows of the spectral matrix by power, and `ellipticity` differs for tilted ellipses; see [`wpol_helicity`](@ref).
 
 We can also use single value decomposition (SVD) technique to calculate the wave polarization.
 
