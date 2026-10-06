@@ -64,7 +64,7 @@ The analysis assumes the data are in a right-handed, field-aligned coordinate sy
 
 # Keywords
 - `nfft`: Number of points for FFT (default: 256)
-- `noverlap`: Number of overlapping points between windows (default: nfft÷2)
+- `noverlap`: Number of samples shared by consecutive windows (default: nfft÷2)
 - `smooth_t`: Time domain window function (default: Hann window)
 - `smooth_f`: Frequency domain smoothing window (default: 3-point Hamming window)
 
@@ -102,8 +102,10 @@ function _spectral_analysis(kernel, X::AbstractMatrix{T}, fs; nfft = 256, noverl
     Nfreq = div(nfft, 2) + 1
     freqs = (fs / nfft) * (0:(Nfreq - 1))
 
-    nsteps = floor(Int, (N - nfft) / noverlap) + 1
-    indices = 1 .+ (0:(nsteps - 1)) * noverlap .+ div(nfft, 2)
+    0 <= noverlap < nfft || throw(ArgumentError("need 0 ≤ noverlap < nfft, got noverlap = $noverlap, nfft = $nfft"))
+    step = nfft - noverlap
+    nsteps = N < nfft ? 0 : fld(N - nfft, step) + 1
+    indices = (1 + div(nfft, 2)) .+ step .* (0:(nsteps - 1))
     aa = map(T, smooth_f ./ sum(smooth_f))
     window = smooth_t ./ nfft # FFT normalization folded in
     binwidth = fs / nfft
@@ -121,7 +123,7 @@ function _spectral_analysis(kernel, X::AbstractMatrix{T}, fs; nfft = 256, noverl
             Xw = @alloc(T, nfft, n)
             Xf = @alloc(Complex{T}, Nfreq, n)
             Sf = @alloc(Complex{T}, n, n)
-            start = 1 + (j - 1) * noverlap
+            start = 1 + (j - 1) * step
             Xw .= view(X, start:(start + nfft - 1), :) .* window
             mul!(Xf, plan, Xw)
             for f in 1:Nfreq

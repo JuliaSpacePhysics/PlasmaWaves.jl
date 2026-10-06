@@ -65,6 +65,12 @@ end
     @test spectral_matrix(X) ≈ spectral_matrix(X', 2)
 end
 
+@testset "wavpol windows" begin
+    X = randn(1024, 3)
+    @test wavpol(X; nfft = 256, noverlap = 192).indices == 129:64:897
+    @test wavpol(X; nfft = 256, noverlap = 0).indices == 129:256:897
+end
+
 using Downloads, JLD2
 
 function get_test_data(url)
