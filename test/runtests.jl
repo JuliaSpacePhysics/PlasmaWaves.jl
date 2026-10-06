@@ -71,6 +71,14 @@ end
     @test wavpol(X; nfft = 256, noverlap = 0).indices == 129:256:897
 end
 
+@testset "wavpol power obeys Parseval" begin
+    nfft, fs = 64, 4.0
+    X = randn(nfft, 3)
+    w = PlasmaWaves._smooth_t(nfft)
+    res = wavpol(X, fs; nfft, smooth_f = (1,))
+    @test sum(res.power) * fs / nfft ≈ sum(abs2, w .* X) / sum(abs2, w)
+end
+
 using Downloads, JLD2
 
 function get_test_data(url)

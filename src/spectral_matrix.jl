@@ -37,19 +37,15 @@ function spectral_matrix(X::AbstractMatrix{<:Real}, dim = 1)
     return dim == 1 ? spectral_matrix(Xf) : spectral_matrix(transpose(Xf))
 end
 
-# `S = Σₖ aa[k] Xf[g, :] * Xf[g, :]'` over the bins g centred on `f`; unsmoothed where the window would run off the ends.
+# `S = Σₖ aa[k] Xf[g, :] * Xf[g, :]'` over the bins g centred on `f`.
 function smoothed_spectral_matrix!(S, Xf, aa, f)
     h = length(aa) ÷ 2
-    edge = !(h < f <= size(Xf, 1) - h)
+    checkbounds(Xf, (f - h):(f + h), axes(Xf, 2))
     @inbounds for j in axes(Xf, 2), i in 1:j
         acc = zero(eltype(S))
-        if edge
-            acc = Xf[f, i] * conj(Xf[f, j])
-        else
-            for k in eachindex(aa)
-                g = f - h + k - 1
-                acc += aa[k] * (Xf[g, i] * conj(Xf[g, j]))
-            end
+        for k in eachindex(aa)
+            g = f - h + k - 1
+            acc += aa[k] * (Xf[g, i] * conj(Xf[g, j]))
         end
         S[i, j] = acc
         S[j, i] = conj(acc)

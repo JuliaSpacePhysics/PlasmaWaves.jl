@@ -66,20 +66,20 @@ The analysis assumes the data are in a right-handed, field-aligned coordinate sy
 - `nfft`: Number of points for FFT (default: 256)
 - `noverlap`: Number of samples shared by consecutive windows (default: nfft÷2)
 - `smooth_t`: Time domain window function (default: Hann window)
-- `smooth_f`: Frequency domain smoothing window (default: 3-point Hamming window)
+- `smooth_f`: Frequency domain smoothing window of odd length (default: 3-point Hamming window)
 
 # Returns
 A named tuple containing:
 - `indices`: Time indices for each FFT window
 - `freqs`: Frequency array
-- `power`: Power spectral density, normalized by frequency bin width and window function
+- `power`: One-sided power spectral density (input units² / Hz)
 - `degpol`: Degree of polarization [0,1]
 - `waveangle`: Wave normal angle [0,π/2]
 - `ellipticity`: Wave ellipticity [-1,1], negative for left-hand polarized
 - `helicity`: Wave helicity
 
 # Notes
-- `smooth_f` is needed because otherwise the rank of the spectral matrix ``S̃(f)`` is 1, yielding a constant (fully polarized) result ``degpol(f) = 1``. Frequency smoothing introduces ensemble averaging, corresponding to different realizations, so ``S̃(f)`` gains fuller rank.
+- `smooth_f` is needed because otherwise the rank of the spectral matrix ``S̃(f)`` is 1, yielding a constant (fully polarized) result ``degpol(f) = 1``. Frequency smoothing introduces ensemble averaging, corresponding to different realizations, so ``S̃(f)`` gains fuller rank. The `length(smooth_f) ÷ 2` bins at each end, where the smoothing window does not fit, report only `power`; the other outputs are NaN there.
 -  The cross-spectral density matrix ``S(f)`` is the Fourier transform of ``R(τ) = <X(t) X(t+τ)^†>`` ([Wiener-Khinchin theorem](https://en.wikipedia.org/wiki/Wiener%E2%80%93Khinchin_theorem)).
 
 See also: [`polarization`](@ref), [`wave_normal_angle`](@ref), [`wpol_helicity`](@ref)
@@ -103,18 +103,20 @@ function _spectral_analysis(kernel, X::AbstractMatrix{T}, fs; nfft = 256, noverl
     freqs = (fs / nfft) * (0:(Nfreq - 1))
 
     0 <= noverlap < nfft || throw(ArgumentError("need 0 ≤ noverlap < nfft, got noverlap = $noverlap, nfft = $nfft"))
+    isodd(length(smooth_f)) || throw(ArgumentError("smooth_f needs odd length to centre on each bin, got $(length(smooth_f))"))
     step = nfft - noverlap
     nsteps = N < nfft ? 0 : fld(N - nfft, step) + 1
     indices = (1 + div(nfft, 2)) .+ step .* (0:(nsteps - 1))
     aa = map(T, smooth_f ./ sum(smooth_f))
     window = smooth_t ./ nfft # FFT normalization folded in
-    binwidth = fs / nfft
-    W = sum(abs2, smooth_t) / nfft
-    scale = 2 / (binwidth * W)
+    h = length(aa) ÷ 2
+    psd = 1 / (fs * sum(abs2, window))
+    # One-sided PSD: DC and Nyquist have no negative-frequency twin to fold in.
+    fold(f) = f == 1 || 2(f - 1) == nfft ? psd : 2psd
 
     power = zeros(T, nsteps, Nfreq)
     # The probe call only fixes the output names.
-    outs = map(_ -> zeros(T, nsteps, Nfreq), kernel(zeros(Complex{T}, n, n)))
+    outs = map(_ -> fill(T(NaN), nsteps, Nfreq), kernel(zeros(Complex{T}, n, n)))
 
     plan = plan_rfft(zeros(T, nfft, n), 1)
 
@@ -127,9 +129,13 @@ function _spectral_analysis(kernel, X::AbstractMatrix{T}, fs; nfft = 256, noverl
             Xw .= view(X, start:(start + nfft - 1), :) .* window
             mul!(Xf, plan, Xw)
             for f in 1:Nfreq
-                smoothed_spectral_matrix!(Sf, Xf, aa, f)
-                power[j, f] = scale * real(tr(Sf))
-                map((o, v) -> (o[j, f] = v), outs, kernel(Sf))
+                if h < f <= Nfreq - h
+                    smoothed_spectral_matrix!(Sf, Xf, aa, f)
+                    power[j, f] = fold(f) * real(tr(Sf))
+                    map((o, v) -> (o[j, f] = v), outs, kernel(Sf))
+                else
+                    power[j, f] = fold(f) * sum(i -> abs2(Xf[f, i]), 1:n)
+                end
             end
         end
     end
