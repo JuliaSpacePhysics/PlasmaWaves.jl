@@ -85,12 +85,12 @@ end
         X = cos.(ω .* t) * e1' .+ b .* sin.(ω .* t) * e2'
         for method in (Means(), Samson(), Santolik())
             r = wavpol(X; nfft, method)
+            @test all(≈(1), r.degpol[:, 21])
             @test all(x -> isapprox(x, θ; atol = 1.0e-6), r.waveangle[:, 21])
             @test all(≈(sgn * b), r.ellipticity[:, 21])
         end
         for method in (Means(), Samson())
             r = wavpol(X; nfft, method)
-            @test all(≈(1), r.degpol[:, 21])
             # (x, y) projection has axes cos θ and b; which is major flips at θ = π/3
             @test all(≈(sgn * min(b / cos(θ), cos(θ) / b)), r.ellipticity_perp[:, 21])
         end

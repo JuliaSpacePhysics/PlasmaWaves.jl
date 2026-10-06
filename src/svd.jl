@@ -22,7 +22,7 @@ end
     Santolik()
 
 Polarization `method` for [`wavpol`](@ref) from the singular value decomposition of the real 6×3 matrix ``[Re S; Im S]``
-[santolikSingularValueDecomposition2003](@cite). Returns `planarity`, `waveangle` and `ellipticity`.
+[santolikSingularValueDecomposition2003](@cite). Returns `degpol`, `planarity`, `waveangle` and `ellipticity`.
 
 The wave normal is the right singular vector of the smallest singular value ``W_3``, and `ellipticity` is ``W_2 / W_1`` signed by ``Im S_{12}``.
 `planarity` comes from the squared singular values ``W_i^2``, so near 1 it is resolved only to about ``ε^{1/4}`` (``10^{-4}`` in Float64).
@@ -34,7 +34,7 @@ function (::Santolik)(S)
     λ1, λ2, λ3 = _eigvals3(A...)
     k1, k2, k3 = _eigvec3(A..., λ3)
     return (;
-        planarity = 1 - sqrt(sqrt(max(λ3, 0) / λ1)), waveangle = _angle_from_z(k3, k1, k2),
-        ellipticity = sqrt(max(λ2, 0) / λ1) * _handedness(imag(S[1, 2])),
+        degpol = degree_of_polarization(S), planarity = 1 - sqrt(sqrt(max(λ3, 0) / λ1)),
+        waveangle = _angle_from_z(k3, k1, k2), ellipticity = sqrt(max(λ2, 0) / λ1) * _handedness(imag(S[1, 2])),
     )
 end
