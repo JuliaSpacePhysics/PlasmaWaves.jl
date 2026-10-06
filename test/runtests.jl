@@ -37,6 +37,14 @@ end
     @test minimum(planarity) > 0.99
 end
 
+@testset "degree of polarization" begin
+    # Stokes parameters of a partially polarized 2×2 spectral matrix
+    A = [1.0 0.3-0.4im; 0.2+0.1im 0.5]
+    S = A * A'
+    S0, S1, S2, S3 = real(S[1, 1] + S[2, 2]), real(S[1, 1] - S[2, 2]), 2real(S[1, 2]), 2imag(S[1, 2])
+    @test PlasmaWaves.degree_of_polarization(S0, S1, S2, S3) ≈ PlasmaWaves.degree_of_polarization(S)
+end
+
 @testset "Spectral matrix from time sequence" begin
     # Note: the sign of the off-diagonal elements is opposite to that in the reference due to the convention of DFT they use compared to FFTW
     # $\omega =\frac{2 π k}{N τ}$

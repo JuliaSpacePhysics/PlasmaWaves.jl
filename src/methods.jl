@@ -56,7 +56,7 @@ function (::Means)(S)
     end
     s = _handedness(imag(S[1, 2]))
     return (;
-        degpol = polarization(S), waveangle = _angle_from_z(imag(S[1, 2]), imag(S[1, 3]), imag(S[2, 3])),
+        degpol = degree_of_polarization(S), waveangle = _angle_from_z(imag(S[1, 2]), imag(S[1, 3]), imag(S[2, 3])),
         ellipticity = s * n / d, ellipticity_perp = s * n⊥ / d⊥,
     )
 end
@@ -67,7 +67,7 @@ function (::Samson)(S)
     # x12 = (Re 𝐯 × Im 𝐯)_z is positive for right-hand rotation about z
     s = _handedness(x12)
     return (;
-        degpol = polarization(S), waveangle = _angle_from_z(x12, x23, x31),
+        degpol = degree_of_polarization(S), waveangle = _angle_from_z(x12, x23, x31),
         ellipticity = s * 2 * sqrt(x12^2 + x23^2 + x31^2) / d, ellipticity_perp = s * 2 * abs(x12) / d⊥,
     )
 end

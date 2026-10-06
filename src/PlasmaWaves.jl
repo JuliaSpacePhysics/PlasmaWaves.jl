@@ -10,7 +10,7 @@ using SpaceDataModel: unwrap, times, cadence, SpaceDataModel
 
 using Bumper
 using PrecompileTools
-export spectral_matrix, wavpol, twavpol, polarization
+export spectral_matrix, wavpol, twavpol
 export Means, Samson, Santolik
 
 include("utils.jl")
@@ -18,7 +18,6 @@ include("spectral_matrix.jl")
 include("polarization.jl")
 include("svd.jl")
 include("methods.jl")
-include("Stokes.jl")
 
 """
     twavpol(X; fs, kw...)

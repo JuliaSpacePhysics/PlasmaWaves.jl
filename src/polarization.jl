@@ -5,9 +5,10 @@
 # https://github.com/spedas/pyspedas/blob/master/pyspedas/analysis/twavpol.py
 
 """
-    polarization(S)
+    degree_of_polarization(S)
 
-Compute the degree of polarization (DOP) `p^2` from spectral matrix `S`.
+Degree of polarization ``p^2`` of the ``n×n`` spectral matrix `S` [samsonCommentsDescriptionsPolarization1980](@cite):
+1 for a pure state, 0 for ``S ∝ I``.
 
 ```math
 \\begin{aligned}
@@ -16,7 +17,7 @@ p^2  &= 1-\\frac{(tr 𝐒)^2-(tr 𝐒^2)}{(tr 𝐒)^2-n^{-1}(tr 𝐒)^2} \\\\
 \\end{aligned}
 ```
 """
-function polarization(S)
+function degree_of_polarization(S)
     n = size(S, 1)
     trS = zero(eltype(S))
     trS2 = zero(eltype(S))
@@ -29,6 +30,14 @@ function polarization(S)
     return real((n * trS2 - trS^2) / ((n - 1) * trS^2))
 end
 
+
+"""
+    degree_of_polarization(S0, S1, S2, S3)
+
+Degree of polarization ``p^2 = (S_1^2 + S_2^2 + S_3^2) / S_0^2`` from the [Stokes parameters](https://en.wikipedia.org/wiki/Stokes_parameters),
+equal to [`degree_of_polarization(S)`](@ref) of the corresponding 2×2 spectral matrix.
+"""
+degree_of_polarization(S0, S1, S2, S3) = (S1^2 + S2^2 + S3^2) / S0^2
 
 # Angle of the line along (x, y, z) from the z axis, in [0, π/2] since the sign of a wave vector is undetermined; NaN for the zero vector.
 _angle_from_z(z, x, y) = iszero(x) && iszero(y) && iszero(z) ? oftype(z, NaN) : atan(hypot(x, y), abs(z))
@@ -60,7 +69,7 @@ The data are assumed to be in a right-handed, field-aligned coordinate system wi
 # Returns
 A named tuple with `indices` (centre sample of each window), `freqs`, `power` (one-sided power spectral density, input units² / Hz),
 and the fields of `method`, each a (window × frequency) matrix. A field name means the same quantity whichever method returns it:
-- `degpol`: Degree of polarization ``p^2`` in [0, 1]; see [`polarization`](@ref)
+- `degpol`: Degree of polarization ``p^2`` in [0, 1]; see [`degree_of_polarization`](@ref)
 - `waveangle`: Angle between the wave normal and z, in [0, π/2]
 - `ellipticity`: Minor-to-major axis ratio of the polarization ellipse in its own plane, in [-1, 1], negative for left-hand rotation about z
 - `ellipticity_perp`: The same for the ellipse projected onto the (x, y) plane
