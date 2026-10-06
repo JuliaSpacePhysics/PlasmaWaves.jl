@@ -13,33 +13,26 @@ end
     @test_call PlasmaWaves.workload()
 end
 
-@testset "svd_polarization" begin
-    # Wave in the xy-plane rotating x → -y (left-handed about z): Xf = [a, ib, 0]
-    # → S[1,2] = -iab, wave normal = ẑ, planarity = 1, ellipticity = -b/a
+@testset "Santolik" begin
+    # Wave in the xy-plane rotating x → -y (left-handed about z)
     a, b = 3.5, 1.2
-    Xf = zeros(ComplexF64, 1, 3)
-    Xf[1, 1] = a
-    Xf[1, 2] = 1im * b
-    S3d = spectral_matrix(Xf)
-    Sf = @view S3d[:, :, 1]
-    @test Sf ≈ [a^2 -im*a*b 0; im*a*b b^2 0; 0 0 0]
-    res = PlasmaWaves.svd_polarization(Sf)
-    @test res.theta ≈ 0
+    u = [a, b * im, 0]
+    res = Santolik()(u * u')
+    @test res.waveangle ≈ 0
     @test res.planarity ≈ 1.0
     @test res.ellipticity ≈ -b / a
 
     # Wave normal along x: Gram matrix has a11=λ₃=0, a12=a13=0
-    S_x = ComplexF64[0 0 0; 0 4.0 2.0; 0 2.0 8.0]
-    res_x = PlasmaWaves.svd_polarization(S_x)
-    @test !any(isnan, (res_x.theta, res_x.phi, res_x.planarity, res_x.ellipticity))
-    @test res_x.theta ≈ π / 2
+    res_x = Santolik()(ComplexF64[0 0 0; 0 4.0 2.0; 0 2.0 8.0])
+    @test !any(isnan, res_x)
+    @test res_x.waveangle ≈ π / 2
 
     # Planar wave (S has no component along its normal n̂) in Float32
     planarity = map(1:1000) do _
         n̂ = normalize(randn(Float32, 3))
         P = I - n̂ * n̂'
         u, v = P * randn(ComplexF32, 3), P * randn(ComplexF32, 3)
-        PlasmaWaves.svd_polarization(u * u' + v * v').planarity
+        Santolik()(u * u' + v * v').planarity
     end
     @test minimum(planarity) > 0.99
 end
@@ -75,29 +68,39 @@ end
 end
 
 @testset "elliptical wave" begin
-    # Ellipse with axes 1 and b, rotating right-handed about k̂, which is tilted by θ from z
+    # Ellipse with axes 1 and b, rotating about k̂ (right-handed for sgn = 1), which is tilted by θ from z
     b, nfft = 0.6, 256
     t = 0:2047
     ω = 2π * 20 / nfft # centred on bin 21
-    for θ in (0.0, π / 6, π / 3)
-        e1, e2 = [cos(θ), 0, -sin(θ)], [0, 1, 0]
+    for θ in (0.0, π / 6, π / 3), sgn in (1, -1)
+        e1, e2 = [cos(θ), 0, -sin(θ)], [0, sgn, 0]
         X = cos.(ω .* t) * e1' .+ b .* sin.(ω .* t) * e2'
-        r = wavpol(X; nfft)
-        @test all(≈(1), r.degpol[:, 21])
-        @test all(x -> isapprox(x, θ; atol = 1.0e-8), r.waveangle[:, 21])
-        @test all(≈(b), r.helicity[:, 21])
-        # (x, y) projection has axes cos θ and b; which is major flips at θ = π/3
-        @test all(≈(min(b / cos(θ), cos(θ) / b)), r.ellipticity[:, 21])
-        r = PlasmaWaves.wavpol_svd(X; nfft)
+        for method in (Means(), Samson(), Santolik())
+            r = wavpol(X; nfft, method)
+            @test all(x -> isapprox(x, θ; atol = 1.0e-6), r.waveangle[:, 21])
+            @test all(≈(sgn * b), r.ellipticity[:, 21])
+        end
+        for method in (Means(), Samson())
+            r = wavpol(X; nfft, method)
+            @test all(≈(1), r.degpol[:, 21])
+            # (x, y) projection has axes cos θ and b; which is major flips at θ = π/3
+            @test all(≈(sgn * min(b / cos(θ), cos(θ) / b)), r.ellipticity_perp[:, 21])
+        end
+        r = wavpol(X; nfft, method = Santolik())
         @test all(x -> isapprox(x, 1; atol = 1.0e-3), r.planarity[:, 21]) # Gram matrix: ~eps^¼
-        @test all(x -> isapprox(x, θ; atol = 1.0e-6), r.waveangle[:, 21])
-        @test all(≈(b), r.ellipticity[:, 21])
     end
     # Expected spectral matrix of a parallel wave over white noise: the z row holds only noise
     v = [1, -b * im, 0]
-    h, e = PlasmaWaves.wpol_helicity(1.0e4 * v * v' + I)
-    @test h ≈ b rtol = 1.0e-3
-    @test e ≈ b rtol = 1.0e-3
+    @test Means()(1.0e4 * v * v' + I).ellipticity ≈ b rtol = 1.0e-3
+    @test Samson()(3 * v * v' + I).ellipticity ≈ b # Means: 0.46
+
+    # k ∥ x exactly: rotation about z is undefined, the axial ratio is not
+    X = b .* sin.(ω .* t) * [0, 1, 0]' .+ cos.(ω .* t) * [0, 0, 1]'
+    for method in (Means(), Samson(), Santolik())
+        @test all(≈(b), wavpol(X; nfft, method).ellipticity[:, 21])
+        # Float32 at small amplitude, where powers of S underflow unless it is normalized
+        @test all(≈(b), wavpol(Float32.(1.0e-6 .* X); nfft, method).ellipticity[:, 21])
+    end
 end
 
 @testset "wavpol windows" begin
@@ -131,6 +134,6 @@ end
     result = twavpol(thc_scf_fac)
     @test result.power == twavpol(thc_scf_fac').power'
 
-    result2 = twavpol_svd(thc_scf_fac)
-    @test result2.power == twavpol_svd(thc_scf_fac').power'
+    result2 = twavpol(thc_scf_fac; method = Santolik())
+    @test isequal(result2.planarity, twavpol(thc_scf_fac'; method = Santolik()).planarity')
 end

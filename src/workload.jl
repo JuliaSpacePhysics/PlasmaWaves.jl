@@ -1,9 +1,10 @@
 function workload(S = Float64)
     X = rand(S, 1000, 3)
-    wavpol(X, S(1.0))
-    twavpol(X)
-    twavpol_svd(X)
-    return twavpol(permutedims(X); dim = 2), twavpol_svd(permutedims(X); dim = 2)
+    return map((Means(), Samson(), Santolik())) do method
+        wavpol(X, S(1.0); method)
+        twavpol(X; method)
+        twavpol(permutedims(X); dim = 2, method)
+    end
 end
 
 

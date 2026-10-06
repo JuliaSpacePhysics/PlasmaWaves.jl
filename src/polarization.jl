@@ -30,17 +30,11 @@ function polarization(S)
 end
 
 
-"""
-    wave_normal_angle(S)
+# Angle of the line along (x, y, z) from the z axis, in [0, π/2] since the sign of a wave vector is undetermined; NaN for the zero vector.
+_angle_from_z(z, x, y) = iszero(x) && iszero(y) && iszero(z) ? oftype(z, NaN) : atan(hypot(x, y), abs(z))
 
-Angle between the wave vector and z from the imaginary part of the spectral matrix `S` (Means 1972):
-``𝐤 ∥ (Im S_{23}, -Im S_{13}, Im S_{12})``, folded into [0, π/2] since the sign of ``𝐤`` is undetermined.
-NaN when ``Im S = 0``.
-"""
-function wave_normal_angle(S)
-    A, B, C = imag(S[1, 2]), imag(S[1, 3]), imag(S[2, 3])
-    return iszero(A) && iszero(B) && iszero(C) ? oftype(A, NaN) : atan(hypot(B, C), abs(A))
-end
+# Handedness of rotation about z, never 0: at exactly perpendicular propagation it is undefined, but the axial ratio is not.
+_handedness(x) = ifelse(x < 0, -one(x), one(x))
 
 _smooth_t(nfft) = let xs = 0:(nfft - 1)
     @. 0.54 - 0.46 * cos(2π * (xs / nfft))
@@ -48,17 +42,15 @@ end
 _hamming3() = (0.08, 1, 0.08)
 
 """
-    wavpol(X, fs=1; nfft=256, noverlap=div(nfft, 2), smooth_t=_smooth_t(nfft), smooth_f=_hamming3())
+    wavpol(X, fs = 1; method = Means(), nfft = 256, noverlap = div(nfft, 2), smooth_t, smooth_f, dim = 1)
 
-Perform polarization analysis of `n`-component time series data `X` (each column is a component) of sampling frequency `fs`.
+Polarization analysis of 3-component time series `X` (components along dimension 2, or 1 with `dim = 2`) sampled at `fs`.
 
-For each FFT window (with specified overlap), the routine:
-1. Applies a time-domain window function and computes the FFT to construct the spectral matrix ``S(f)``
-2. Applies frequency smoothing using a window function
-3. Computes wave parameters: power, degree of polarization, wave normal angle, ellipticity, and helicity
+For each FFT window, the spectral matrix ``S(f)`` of the windowed data is smoothed over frequency, scaled to unit trace and passed to `method`,
+which turns it into wave parameters. Methods: [`Means`](@ref) (SPEDAS `wavpol`), [`Samson`](@ref) (principal eigenvector)
+and [`Santolik`](@ref) (SVD); any callable mapping the 3×3 ``S`` to a `NamedTuple` of reals also works.
 
-The analysis assumes the data are in a right-handed, field-aligned coordinate system 
-(with Z along the ambient magnetic field).
+The data are assumed to be in a right-handed, field-aligned coordinate system with z along the ambient magnetic field.
 
 # Keywords
 - `noverlap`: Number of samples shared by consecutive windows
@@ -66,31 +58,20 @@ The analysis assumes the data are in a right-handed, field-aligned coordinate sy
 - `smooth_f`: Frequency-domain smoothing weights of odd length (default: 3-point Hamming)
 
 # Returns
-A named tuple containing:
-- `indices`: Time indices for each FFT window
-- `freqs`: Frequency array
-- `power`: One-sided power spectral density (input units² / Hz)
-- `degpol`: Degree of polarization [0,1]
-- `waveangle`: Wave normal angle [0,π/2]
-- `ellipticity`: Wave ellipticity [-1,1], negative for left-hand polarized
-- `helicity`: Wave helicity
+A named tuple with `indices` (centre sample of each window), `freqs`, `power` (one-sided power spectral density, input units² / Hz),
+and the fields of `method`, each a (window × frequency) matrix. A field name means the same quantity whichever method returns it:
+- `degpol`: Degree of polarization ``p^2`` in [0, 1]; see [`polarization`](@ref)
+- `waveangle`: Angle between the wave normal and z, in [0, π/2]
+- `ellipticity`: Minor-to-major axis ratio of the polarization ellipse in its own plane, in [-1, 1], negative for left-hand rotation about z
+- `ellipticity_perp`: The same for the ellipse projected onto the (x, y) plane
+- `planarity`: ``1 - \\sqrt{W_3 / W_1}`` from the singular values ``W_1 ≥ W_2 ≥ W_3`` of ``[Re S; Im S]``
 
 # Notes
 `smooth_f` is needed because otherwise the rank of the spectral matrix ``S̃(f)`` is 1, yielding a constant (fully polarized) result ``degpol(f) = 1``. Frequency smoothing introduces ensemble averaging, corresponding to different realizations, so ``S̃(f)`` gains fuller rank. The `length(smooth_f) ÷ 2` bins at each end, where the smoothing window does not fit, report only `power`; the other outputs are NaN there.
-
-See also: [`polarization`](@ref), [`wave_normal_angle`](@ref), [`wpol_helicity`](@ref)
 """
 wavpol(X, args...; kw...) = _transpose(_wavpol, X, args...; kw...)
 
-_wavpol(X, fs = 1; kw...) = _spectral_analysis(_wavpol_kernel, X, fs; kw...)
-
-function _wavpol_kernel(S)
-    helicity, ellipticity = wpol_helicity(S)
-    return (; degpol = polarization(S), waveangle = wave_normal_angle(S), ellipticity, helicity)
-end
-
-# Windowed FFT → smoothed spectral matrix → `kernel(S)::NamedTuple` per (window, frequency).
-function _spectral_analysis(kernel, X::AbstractMatrix{T}, fs; nfft = 256, noverlap = div(nfft, 2), smooth_t = _smooth_t(nfft), smooth_f = _hamming3()) where {T}
+function _wavpol(X::AbstractMatrix{T}, fs = 1; method = Means(), nfft = 256, noverlap = div(nfft, 2), smooth_t = _smooth_t(nfft), smooth_f = _hamming3()) where {T}
     n = 3
     @assert size(X, 2) == n
     N = size(X, 1)
@@ -111,7 +92,7 @@ function _spectral_analysis(kernel, X::AbstractMatrix{T}, fs; nfft = 256, noverl
 
     power = zeros(T, nsteps, Nfreq)
     # The probe call only fixes the output names.
-    outs = map(_ -> fill(T(NaN), nsteps, Nfreq), kernel(zeros(Complex{T}, n, n)))
+    outs = map(_ -> fill(T(NaN), nsteps, Nfreq), method(Matrix{Complex{T}}(I, n, n) / n))
 
     plan = plan_rfft(zeros(T, nfft, n), 1)
 
@@ -126,8 +107,11 @@ function _spectral_analysis(kernel, X::AbstractMatrix{T}, fs; nfft = 256, noverl
             for f in 1:Nfreq
                 if h < f <= Nfreq - h
                     smoothed_spectral_matrix!(Sf, Xf, aa, f)
-                    power[j, f] = fold(f) * real(tr(Sf))
-                    map((o, v) -> (o[j, f] = v), outs, kernel(Sf))
+                    trS = real(tr(Sf))
+                    power[j, f] = fold(f) * trS
+                    # The methods raise S to up to the 8th power, which underflows Float32 for small fields.
+                    Sf ./= trS
+                    map((o, v) -> (o[j, f] = v), outs, method(Sf))
                 else
                     power[j, f] = fold(f) * sum(i -> abs2(Xf[f, i]), 1:n)
                 end

@@ -1,14 +1,3 @@
-function _smallest_eigenvector(a11, a22, a33, a12, a13, a23, λ)
-    b11, b22, b33 = a11 - λ, a22 - λ, a33 - λ
-    # Three columns of adj(A − λI); each lies in the null space. Pick the largest for stability.
-    c1 = (b22 * b33 - a23^2, a23 * a13 - a12 * b33, a12 * a23 - b22 * a13)
-    c2 = (a12 * b33 - a13 * a23, a13^2 - b11 * b33, b11 * a23 - a12 * a13)
-    c3 = (a12 * a23 - a13 * b22, a13 * a12 - b11 * a23, b11 * b22 - a12^2)
-    v = argmax(c -> c[1]^2 + c[2]^2 + c[3]^2, (c1, c2, c3))
-    invn = inv(sqrt(v[1]^2 + v[2]^2 + v[3]^2))
-    return v[1] * invn, v[2] * invn, v[3] * invn
-end
-
 # Upper triangle of B^T B, where B is the 6×3 real matrix [Re(S); skew(Im(S))] for 3×3 Hermitian S.
 # This equals the Gram matrix whose eigenvalues give SVD singular values squared.
 # Squaring also squares the condition number, so it is formed in at least Float64:
@@ -29,52 +18,23 @@ end
     return a11, a22, a33, a12, a13, a23
 end
 
-function svd_polarization(S::AbstractMatrix)
-    a11, a22, a33, a12, a13, a23 = _gram_upper(S)
+"""
+    Santolik()
 
-    q = (a11 + a22 + a33) / 3
-    p1 = a12^2 + a13^2 + a23^2
-    if p1 == 0
-        λ1 = max(a11, a22, a33)
-        λ3 = min(a11, a22, a33)
-        λ2 = a11 + a22 + a33 - λ1 - λ3
-        imin = argmin((a11, a22, a33))
-        v1 = imin == 1 ? one(a11) : zero(a11)
-        v2 = imin == 2 ? one(a22) : zero(a22)
-        v3 = imin == 3 ? one(a33) : zero(a33)
-    else
-        p2 = (a11 - q)^2 + (a22 - q)^2 + (a33 - q)^2 + 2p1
-        p = sqrt(p2 / 6)
-        b11 = (a11 - q) / p
-        b22 = (a22 - q) / p
-        b33 = (a33 - q) / p
-        b12 = a12 / p
-        b13 = a13 / p
-        b23 = a23 / p
-        r = (b11 * b22 * b33 + 2 * b12 * b13 * b23 - b11 * b23^2 - b22 * b13^2 - b33 * b12^2) / 2
-        ϕ = acos(clamp(r, -1, 1)) / 3
-        λ1 = q + 2p * cos(ϕ)
-        λ3 = q + 2p * cos(ϕ + 2π / 3)
-        λ2 = 3q - λ1 - λ3
-        v1, v2, v3 = _smallest_eigenvector(a11, a22, a33, a12, a13, a23, λ3)
-    end
+Polarization `method` for [`wavpol`](@ref) from the singular value decomposition of the real 6×3 matrix ``[Re S; Im S]``
+[santolikSingularValueDecomposition2003](@cite). Returns `planarity`, `waveangle` and `ellipticity`.
 
-    s = ifelse(v3 < 0, -one(v3), one(v3))
-    v1 *= s
-    v2 *= s
-    v3 *= s
-    theta = atan(sqrt(v1^2 + v2^2), v3)
-    phi = atan(v2, v1)
-    planarity = 1 - sqrt(sqrt(max(λ3, 0) / λ1))
-    ellipticity = sqrt(max(λ2, 0) / λ1) * sign(imag(S[1, 2]))
-    return (; theta, phi, planarity, ellipticity)
-end
+The wave normal is the right singular vector of the smallest singular value ``W_3``, and `ellipticity` is ``W_2 / W_1`` signed by ``Im S_{12}``.
+`planarity` comes from the squared singular values ``W_i^2``, so near 1 it is resolved only to about ``ε^{1/4}`` (``10^{-4}`` in Float64).
+"""
+struct Santolik end
 
-wavpol_svd(X, args...; kw...) = _transpose(_wavpol_svd, X, args...; kw...)
-
-_wavpol_svd(X, fs = 1; kw...) = _spectral_analysis(_svd_kernel, X, fs; kw...)
-
-function _svd_kernel(S)
-    (; theta, planarity, ellipticity) = svd_polarization(S)
-    return (; planarity, waveangle = theta, ellipticity)
+function (::Santolik)(S)
+    A = _gram_upper(S)
+    λ1, λ2, λ3 = _eigvals3(A...)
+    k1, k2, k3 = _eigvec3(A..., λ3)
+    return (;
+        planarity = 1 - sqrt(sqrt(max(λ3, 0) / λ1)), waveangle = _angle_from_z(k3, k1, k2),
+        ellipticity = sqrt(max(λ2, 0) / λ1) * _handedness(imag(S[1, 2])),
+    )
 end

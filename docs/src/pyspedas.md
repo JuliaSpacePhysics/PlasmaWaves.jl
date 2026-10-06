@@ -45,19 +45,19 @@ res = twavpol(thc_scf_fac)
 
 f = Figure(; size=(1200, 800))
 tplot(f[1,1], py_result)
-tplot(f[1,2], res)
+tplot(f[1,2], res[(:power, :degpol, :waveangle, :ellipticity_perp, :ellipticity)])
 f
 ```
 
 Intended differences from PySPEDAS:
 - `power` at the first and last bin is not doubled (one-sided PSD), and the Nyquist bin is kept.
 - Polarization parameters are NaN at the edge bins instead of undefined values.
-- `helicity` and `ellipticity` weight the rows of the spectral matrix by power, and `ellipticity` differs for tilted ellipses; see [`wpol_helicity`](@ref).
+- `ellipticity_perp` corresponds to PySPEDAS `elliptict` and `abs(ellipticity)` to `helict`. Rows of the spectral matrix are weighted by power, and `ellipticity_perp` differs for tilted ellipses; see [`Means`](@ref).
 
-We can also use single value decomposition (SVD) technique to calculate the wave polarization.
+Other methods: singular value decomposition ([`Santolik`](@ref)) and the principal eigenvector ([`Samson`](@ref)).
 
 ```@example pyspedas
-res = twavpol_svd(thc_scf_fac)
+res = twavpol(thc_scf_fac; method = Santolik())
 tplot(res)
 ```
 
@@ -66,7 +66,7 @@ tplot(res)
 ```@example pyspedas
 using Chairmarks
 
-@b twavpol(thc_scf_fac), twavpol_svd(thc_scf_fac), pyspedas.twavpol("thc_scf_fac")
+@b twavpol(thc_scf_fac), twavpol(thc_scf_fac; method = Samson()), twavpol(thc_scf_fac; method = Santolik()), pyspedas.twavpol("thc_scf_fac")
 ```
 
 Julia is about 100 times faster than Python.

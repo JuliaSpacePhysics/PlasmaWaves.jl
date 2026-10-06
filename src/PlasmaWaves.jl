@@ -1,11 +1,7 @@
 """
     PlasmaWaves
 
-Plasma wave analysis.
-
-# Functions
-
-- Wave polarization analysis: [`twavpol`](@ref), [`twavpol_svd`](@ref), including calculating the degree of polarization, wave normal angle, helicity, ellipticity, and planarity metrics.
+Plasma wave analysis: polarization with [`wavpol`](@ref) and [`twavpol`](@ref).
 """
 module PlasmaWaves
 using FFTW
@@ -14,39 +10,31 @@ using SpaceDataModel: unwrap, times, cadence, SpaceDataModel
 
 using Bumper
 using PrecompileTools
-export spectral_matrix, wavpol, twavpol, twavpol_svd, wpol_helicity, polarization
+export spectral_matrix, wavpol, twavpol, polarization
+export Means, Samson, Santolik
 
 include("utils.jl")
 include("spectral_matrix.jl")
 include("polarization.jl")
 include("svd.jl")
-include("helicity.jl")
+include("methods.jl")
 include("Stokes.jl")
 
 """
-    twavpol(X; fs = nothing, nfft = 256, noverlap = div(nfft, 2))
+    twavpol(X; fs, kw...)
 
-Polarization analysis of time series data `X` (each column is a component) of sampling frequency `fs`.
-
-If `fs` is not provided, it will be inferred from the `times` dimension of `X`.
-
-See [`wavpol`](@ref) for details.
+[`wavpol`](@ref) on time series `X`, with `fs` inferred from the `times` dimension of `X` if not given.
+Adds the window centre `times` to the result.
 """
-twavpol(X; kwargs...) = _twavpol(wavpol, X; kwargs...)
+twavpol(X; kwargs...) = _twavpol(X; kwargs...)
 
-"""
-    twavpol_svd(X; fs = nothing, nfft = 256, noverlap = div(nfft, 2))
+@deprecate twavpol_svd(X; kwargs...) twavpol(X; method = Santolik(), kwargs...)
+@deprecate wavpol_svd(X, args...; kwargs...) wavpol(X, args...; method = Santolik(), kwargs...) false
 
-Polarization analysis of time series data `X` (each column is a component) of sampling frequency `fs`, using singular value decomposition (SVD) method.
-"""
-twavpol_svd(x; kwargs...) = _twavpol(wavpol_svd, x; kwargs...)
-
-# Internal function for dispatch
-@inline function _twavpol(f, x; fs = nothing, nfft = 256, noverlap = div(nfft, 2), dim = nothing, kwargs...)
-    dim = @something dim 1
+function _twavpol(x; fs = nothing, dim = 1, kwargs...)
     t = unwrap(SpaceDataModel.dim(x, dim))
     fs = @something fs 1 / cadence(Float64, t)
-    res = f(x, fs; nfft, noverlap, dim, kwargs...)
+    res = wavpol(x, fs; dim, kwargs...)
     return (; times = t[res.indices], res...)
 end
 
