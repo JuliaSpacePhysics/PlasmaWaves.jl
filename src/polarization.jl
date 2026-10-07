@@ -7,7 +7,7 @@
 """
     degree_of_polarization(S)
 
-Degree of polarization ``p^2`` of the ``n×n`` spectral matrix `S` [samsonCommentsDescriptionsPolarization1980](@cite):
+Degree of polarization ``p^2`` of the ``n×n`` Hermitian spectral matrix `S` [samsonCommentsDescriptionsPolarization1980](@cite):
 1 for a pure state, 0 for ``S ∝ I``.
 
 ```math
@@ -19,17 +19,21 @@ p^2  &= 1-\\frac{(tr 𝐒)^2-(tr 𝐒^2)}{(tr 𝐒)^2-n^{-1}(tr 𝐒)^2} \\\\
 """
 function degree_of_polarization(S)
     n = size(S, 1)
-    trS = zero(eltype(S))
-    trS2 = zero(eltype(S))
-    @inbounds for i in axes(S, 1)
-        trS += S[i, i]
-        for j in axes(S, 2)
-            trS2 += S[i, j] * S[j, i]
-        end
+    trS = _real_tr(S)
+    trS2 = zero(trS) # tr(S²) for Hermitian S
+    @inbounds for k in eachindex(S)
+        trS2 += abs2(S[k])
     end
-    return real((n * trS2 - trS^2) / ((n - 1) * trS^2))
+    return (n * trS2 - trS^2) / ((n - 1) * trS^2)
 end
 
+function _real_tr(S)
+    t = zero(real(eltype(S)))
+    @inbounds for i in axes(S, 1)
+        t += real(S[i, i])
+    end
+    return t
+end
 
 """
     degree_of_polarization(S0, S1, S2, S3)
@@ -116,10 +120,13 @@ function _wavpol(X::AbstractMatrix{T}, fs = 1; method = Means(), nfft = 256, nov
             for f in 1:Nfreq
                 if h < f <= Nfreq - h
                     smoothed_spectral_matrix!(Sf, Xf, aa, f)
-                    trS = real(tr(Sf))
+                    trS = _real_tr(Sf)
                     power[j, f] = fold(f) * trS
                     # The methods raise S to up to the 8th power, which underflows Float32 for small fields.
-                    Sf ./= trS
+                    invtrS = inv(trS)
+                    @inbounds for k in eachindex(Sf)
+                        Sf[k] *= invtrS
+                    end
                     map((o, v) -> (o[j, f] = v), outs, method(Sf))
                 else
                     power[j, f] = fold(f) * sum(i -> abs2(Xf[f, i]), 1:n)

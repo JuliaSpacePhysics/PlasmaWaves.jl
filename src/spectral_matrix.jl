@@ -40,14 +40,21 @@ end
 function smoothed_spectral_matrix!(S, Xf, aa, f)
     h = length(aa) ÷ 2
     checkbounds(Xf, (f - h):(f + h), axes(Xf, 2))
-    @inbounds for j in axes(Xf, 2), i in 1:j
-        acc = zero(eltype(S))
+    @inbounds for j in axes(Xf, 2)
+        d = zero(real(eltype(S)))
         for k in eachindex(aa)
-            g = f - h + k - 1
-            acc += aa[k] * (Xf[g, i] * conj(Xf[g, j]))
+            d += aa[k] * abs2(Xf[f - h + k - 1, j])
         end
-        S[i, j] = acc
-        S[j, i] = conj(acc)
+        S[j, j] = d
+        for i in 1:(j - 1)
+            acc = zero(eltype(S))
+            for k in eachindex(aa)
+                g = f - h + k - 1
+                acc += aa[k] * (Xf[g, i] * conj(Xf[g, j]))
+            end
+            S[i, j] = acc
+            S[j, i] = conj(acc)
+        end
     end
     return S
 end

@@ -39,8 +39,8 @@ struct Samson end
 # of the ellipse in 3-D and of its (x, y) projection; see `Means`.
 @inline function _ellipse(u1, u2, u3)
     x = (imag(u1 * conj(u2)), imag(u2 * conj(u3)), imag(u3 * conj(u1)))
-    d = abs2(u1) + abs2(u2) + abs2(u3) + abs(u1^2 + u2^2 + u3^2)
-    d⊥ = abs2(u1) + abs2(u2) + abs(u1^2 + u2^2)
+    d = abs2(u1) + abs2(u2) + abs2(u3) + sqrt(abs2(u1^2 + u2^2 + u3^2))
+    d⊥ = abs2(u1) + abs2(u2) + sqrt(abs2(u1^2 + u2^2))
     return x, d, d⊥
 end
 
@@ -96,7 +96,10 @@ end
 # (A - λI)𝐯 = 0 gives r ⋅ 𝐯 = 0 (no conjugate) for every row r, so 𝐯 ∥ rᵢ × rⱼ; take the largest for stability.
 function _eigvec3(a11, a22, a33, a12, a13, a23, λ)
     r1, r2, r3 = (a11 - λ, a12, a13), (conj(a12), a22 - λ, a23), (conj(a13), conj(a23), a33 - λ)
-    return argmax(_norm2, (_cross(r1, r2), _cross(r1, r3), _cross(r2, r3)))
+    v12, v13, v23 = _cross(r1, r2), _cross(r1, r3), _cross(r2, r3)
+    n12, n13, n23 = _norm2(v12), _norm2(v13), _norm2(v23)
+    v, n = ifelse(n12 >= n13, (v12, n12), (v13, n13))
+    return ifelse(n >= n23, v, v23)
 end
 
 _cross(x, y) = (x[2] * y[3] - x[3] * y[2], x[3] * y[1] - x[1] * y[3], x[1] * y[2] - x[2] * y[1])
