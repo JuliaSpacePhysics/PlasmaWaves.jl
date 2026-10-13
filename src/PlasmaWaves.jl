@@ -6,7 +6,8 @@ Plasma wave analysis: polarization with [`wavpol`](@ref) and [`twavpol`](@ref).
 module PlasmaWaves
 using FFTW
 using LinearAlgebra
-using SpaceDataModel: unwrap, times, cadence, SpaceDataModel
+using SpaceDataModel: SpaceDataModel, unwrap
+using TimeseriesUtilities: samplingrate
 
 using Bumper
 using PrecompileTools
@@ -31,8 +32,8 @@ twavpol(X; kwargs...) = _twavpol(X; kwargs...)
 @deprecate wavpol_svd(X, args...; kwargs...) wavpol(X, args...; method = Santolik(), kwargs...) false
 
 function _twavpol(x; fs = nothing, dim = 1, kwargs...)
-    t = unwrap(SpaceDataModel.dim(x, dim))
-    fs = @something fs 1 / cadence(Float64, t)
+    t = unwrap(SpaceDataModel.dims(x, dim))
+    fs = @something fs samplingrate(t)
     res = wavpol(x, fs; dim, kwargs...)
     return (; times = t[res.indices], res...)
 end
