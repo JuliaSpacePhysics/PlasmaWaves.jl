@@ -6,7 +6,7 @@ Plasma wave analysis: polarization with [`wavpol`](@ref) and [`twavpol`](@ref).
 module PlasmaWaves
 using FFTW
 using LinearAlgebra
-using TimeseriesUtilities: axiskeys, samplingrate, unwrap
+using TimeseriesUtilities: axiskeys, samplingrate
 
 using Bumper
 using PrecompileTools
@@ -37,8 +37,8 @@ function _twavpol(x; fs = nothing, dim = 1, kwargs...)
     return (; times = t[res.indices], res...)
 end
 
-# plain arrays have no keys: sample indices
-_keys(x, dim) = typeof(unwrap(x)) === typeof(x) ? axes(x, dim) : axiskeys(x, dim)
+# without times: sample indices
+_keys(x, dim) = @something axiskeys(x, dim) axes(x, dim)
 
 include("workload.jl")
 

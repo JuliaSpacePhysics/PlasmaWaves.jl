@@ -1,5 +1,7 @@
 # PlasmaWaves
 
+[![DOI](https://zenodo.org/badge/1094801941.svg)](https://doi.org/10.5281/zenodo.17657870)
+
 Wave analysis for (space) plasmas.
 
 ## Quick start
@@ -17,23 +19,13 @@ res.waveangle # wave normal angle estimates
 
 Pass `method = Samson()` (principal eigenvector) or `method = Santolik()` (SVD, with planarity) for other estimators.
 
-## Features and 
+## Features and
 
 - [x] Wave polarization analysis with degree of polarization, wave normal angle, ellipticity, and planarity metrics
 - [x] Wave propagation analysis using SVD of magnetic field
 
-See [Wave polarization cross-validation with PySPEDAS](https://juliaspacephysics.github.io/SPEDAS.jl/dev/validation/pyspedas/) for comparison and benchmarking against PySPEDAS implementation.
+See [Wave polarization cross-validation with PySPEDAS](https://juliaspacephysics.github.io/PlasmaWaves.jl/dev/pyspedas/) for comparison and benchmarking against PySPEDAS implementation.
 
 ## Elsewhere
 
 - [PlasmaBO.jl](https://github.com/JuliaSpacePhysics/PlasmaBO.jl) for wave dispersion relation analysis.
-
-## Status
-
-⚠️ **Development Status**: This package is in active development. While functional, the functionality is not fully tested (it has been cross-validated with a Python implementation in `PySPEDAS`). Please test thoroughly for scientific work.
-
-[![DOI](https://zenodo.org/badge/1094801941.svg)](https://doi.org/10.5281/zenodo.17657870)
-[![version](https://juliahub.com/docs/General/PlasmaWaves/stable/version.svg)](https://juliahub.com/ui/Packages/General/PlasmaWaves)
-
-[![Build Status](https://github.com/JuliaSpacePhysics/PlasmaWaves.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaSpacePhysics/PlasmaWaves.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/JuliaSpacePhysics/PlasmaWaves.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaSpacePhysics/PlasmaWaves.jl)
